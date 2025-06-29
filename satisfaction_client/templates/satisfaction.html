@@ -1,0 +1,747 @@
+<!-- Début du document HTML principal -->
+<html lang="fr">
+    <head>
+    <!-- Métadonnées et configuration Tailwind CSS -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+  
+      <script>
+          tailwind.config = {
+            darkMode: 'class',
+            theme: {
+              extend: {
+                fontFamily: {
+                  coreSans: ['"Core Sans C"', 'sans-serif'],
+                },
+              },
+            },
+          };
+        </script>
+
+        <!-- Styles personnalisés pour la mise en page et les composants -->
+        <style>
+          /* Variables CSS pour les couleurs principales */
+          :root {
+            --primary-red: #e53e3e;
+            --dark-gray: #2d3748;
+            --light-gray: #edf2f7;
+            --white: #ffffff;
+          }
+          /* Masquer le texte du menu si la sidebar est réduite */
+          .collapsed .menu-text {
+            display: none;
+          }
+          /* Centrer les icônes du menu si la sidebar est réduite */
+          .collapsed .menu-icon {
+            justify-content: center;
+          }
+          /* Style de la sidebar */
+          .sidebar {
+              background-color: var(--white);
+              border-right: 1px solid #e2e8f0;
+              height: 100vh;
+              position: fixed;
+              width: 280px;
+              transition: all 0.3s;
+              z-index: 10;
+          }
+          /* Sidebar réduite */
+          .sidebar-collapsed {
+              width: 80px;
+          }
+          /* Style des cartes (cards) */
+          .card {
+              background-color: var(--white);
+              border-radius: 8px;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+              transition: transform 0.2s;
+          }
+          .card:hover {
+              transform: translateY(-5px);
+          }
+          /* Séparateur de section */
+          .section-divider {
+              border-top: 1px solid #e2e8f0;
+              margin: 10px 0;
+          }
+          /* Bouton de toggle caché par défaut */
+          .toggle-btn {
+              display: none;
+          }
+          /* Animation de la sidebar */
+          #sidebar {
+            transition: width 0.3s ease,background-color 0.7s, color 0.7s;
+          }
+
+          #darkModeIcon {
+              transition: transform 0.3s ease;
+              }
+          #toggleDarkMode:hover #darkModeIcon {
+              transform: rotate(180deg);
+              }
+          body, .card, header, aside, main {
+          transition: background-color 0.7 ease, color 0.7s ease, border-color 0.4s ease;
+          }
+        </style>
+
+  <!-- Liens vers les polices et styles externes -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Core+Sans+C:wght@400;700&display=swap" rel="stylesheet">
+   <link
+      rel="stylesheet"
+      href="/charts/vanilla/radial-gauge/examples/simple-radial-gauge/ag-example-styles.css"
+    />
+
+    <!-- Titre de la page -->
+    <title>Dashboard Satisfaction Client - Djezzy</title>
+    
+    <!-- Inclusion des librairies de graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-gauge"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ag-charts-enterprise@11.3.0/dist/umd/ag-charts-enterprise.js?t=1747399301504"></script>
+    <script src="/charts/vanilla/radial-gauge/examples/simple-radial-gauge/main.js"></script>
+</head>
+
+    <body class="bg-gray-200 dark:bg-gray-950 text-sm h-max md:min-h-full font-coreSans">
+    <div class="flex h-full bg-gray-50 dark:bg-gray-900">
+    <!-- Inclusion de la barre latérale -->
+    {% include "sidebarHome.html" %}
+    
+    <main id="mainContent" class="overflow-x-hidden flex-grow transition-all duration-300 max-w-full bg-gray-200 dark:bg-gray-950">
+        {% if user.is_authenticated and user.profile.role == 'bi_agent' or user.profile.role == 'call_center' or user.profile.role == 'customer_care' %}
+      
+      <!-- En-tête du dashboard -->
+        <header class="flex justify-between items-center bg-gray-50 dark:bg-gray-900 px-10 py-4 drop-shadow-sm">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Djezzy_Logo_2015.svg/696px-Djezzy_Logo_2015.svg.png" alt="Logo" class="w-12 h-auto">
+            <p class="text-gray-500 dark:text-gray-300 text-base font-medium"> {% now "l d F Y" %}</p>
+            <p class="text-gray-500 dark:text-gray-300 text-xl font-medium"> {% now " H:i " %}</p>
+            {% include "upper_bar_option.html" %}
+        </header>
+           <div class=" p-10">
+
+                <!-- Titre principal -->
+                <div class=" justify-between items-center mb-10">
+                        <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Statistique de la Satisfaction Client </h1>
+                </div>
+                <!-- Section CSAT -->
+                <div class="flex items-center my-6  mb-8">
+                    <h2 class="text-gray-500 dark:text-gray-300 font-semibold text-base mr-4 whitespace-nowrap">
+                        Statistiques du Customer Satisfaction Score (CSAT)
+                    </h2>
+                    <div class="flex-grow border-t-4 border-gray-300 dark:border-gray-700"></div>
+                </div>
+                <!-- Cartes CSAT -->
+                <div class="grid card bg-white/50 dark:bg-gray-800/70 p-4  flex grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
+                    <div class=" card  w-full space-y-8  p-6 dark:bg-gray-800">
+                        <!-- Score CSAT global -->
+                        <div class=" space-y-4">
+                            <h3 class="text-gray-500 dark:text-gray-300 text-sm">Score CSAT Globale</h3>
+                            <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100">{{ csat_score }}</h2>
+                        </div>
+                        <!-- Barre de progression CSAT -->
+                        <div>
+                            <div class="relative w-full h-2 rounded-full bg-gradient-to-r from-rose-500 via-yellow-400 to-emerald-500">
+                                <div id="csat-point"
+                                    class="absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-white dark:bg-gray-900 border-4 border-yellow-400 rounded-full shadow-md transition-all duration-300">
+                                </div>
+                            </div>
+                            <div class="flex w-full justify-between mt-2 text-xs text-gray-400 dark:text-gray-500">
+                                <span>|</span><span>|</span><span>|</span><span>|</span><span>|</span>
+                                <span>|</span><span>|</span><span>|</span><span>|</span><span>|</span><span>|</span>
+                            </div>
+                            <div class="flex w-full  justify-between mt-2 text-sm text-gray-500 dark:text-gray-300">
+                                <span>0</span><span>10</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Répartition des profils CSAT -->
+                    <div class=" card h-auto  space-y-6 p-6 dark:bg-gray-800">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Répartition génerale des Profils CSAT</h3>
+                        <div class="card flex text-shadow-lg bg-emerald-50 dark:bg-emerald-900/40 border  border-emerald-700/40 py-3 px-6 rounded-full justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <p class="text-emerald-600 font-semibold text-base">Taux des Clients satisfaits</p>
+                                <h2 class="text-2xl font-bold text-emerald-600">{{ satisfaits }}%</h2>
+                            </div>
+                            <div class="bg-emerald-50 dark:bg-emerald-900/0 rounded-full">
+                                <span class="text-emerald-600 text-3xl material-icons-round">sentiment_satisfied_alt</span>
+                            </div>
+                        </div>
+                        <div class="card flex bg-rose-50 dark:bg-rose-900/40 border border-rose-600/40 py-3 px-6  rounded-full justify-between items-center ">
+                            <div class="flex items-center gap-2">
+                                <p class="text-rose-500 font-semibold text-base">Taux des Clients Insatisfaits</p>
+                                <h2 class="text-2xl font-bold text-rose-500 ">{{ insatisfaits }}%</h2>
+                            </div>
+                            <div class="bg-rose-50 dark:bg-rose-900/0  rounded-full">
+                                <span class="text-rose-500 text-3xl material-icons-round">sentiment_dissatisfied</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Graphiques CSAT -->
+                <div class="grid card bg-white/50 dark:bg-gray-800/70 p-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
+                  <div class="card p-6 mb-8 dark:bg-gray-800">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Evolution du taux des Clients Satisfaits , Insatisfaits</h3>
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center">
+                                <div class="flex items-center mr-4">
+                                    <div class="w-3 h-3 bg-rose-500 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600 dark:text-gray-300">Insatisfaits</span>
+                                </div>
+                                <div class="flex items-center mr-4">
+                                    <div class="w-3 h-3 bg-emerald-500 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600 dark:text-gray-300">Satisfaits</span>
+                                </div>
+                            </div>
+                            <form method="get" class=" space-y-4">
+                              <!-- Sélecteur de période -->
+                              <div>
+                                  <select name="evolution"
+                                          class="border rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-gray-900 dark:text-gray-100"
+                                          onchange="this.form.submit()">
+                                      <option value="">Toute l'année</option>
+                                      <option value="1" {% if request.GET.evolution == '1' %}selected{% endif %}>Janvier - Juin</option>
+                                      <option value="2" {% if request.GET.evolution == '2' %}selected{% endif %}>Juillet - Décembre</option>
+                                  </select>
+                              </div>
+
+                              <!-- Sélecteur d’année -->
+                             <div>
+    <select name="année"
+            class="border rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-gray-900 dark:text-gray-100"
+            onchange="this.form.submit()">
+        <option value="">Toutes les années</option>
+        {% for annee in annees %}
+            <option value="{{ annee }}"
+                {% if request.GET.année %}
+                    {% if request.GET.année == annee|stringformat:"s" %}selected{% endif %}
+                {% else %}
+                    {% if forloop.first %}selected{% endif %}
+                {% endif %}
+            >
+                {{ annee }}
+            </option>
+        {% endfor %}
+    </select>
+</div>
+
+                            <input type="hidden" name="année2" value="{{ request.GET.année2|default_if_none:'' }}">
+                            <input type="hidden" name="evolution_profil" value="{{ request.GET.evolution_profil|default_if_none:'' }}">
+                          </form>
+                        </div>
+                        <div class="h-80">
+                            <canvas id="csatChart" class="w-full h-full"></canvas>
+                        </div>
+                  </div>
+                  <!-- Répartition par tranche d'âge -->
+                  <div class="card p-6 dark:bg-gray-800">
+                      <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Répartition des profils de satisfaction par tranche d’âge</h3>
+                      <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center">
+                          <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 bg-emerald-500 rounded-full mr-2"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Satisfaits</span>
+                          </div>
+                          <div class="flex items-center">
+                            <div class="w-3 h-3 bg-rose-500 rounded-full mr-2"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Insatisfaits</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="flex justify-center">
+                        <div class="w-full h-96">
+                          <canvas id="groupedBarChart" class="w-full h-full"></canvas>
+                        </div>
+                      </div>
+                  </div>
+                </div>
+                <!-- Section NPS -->
+                <div class="flex items-center my-6 mb-8">
+                  <h2 class="text-gray-500 dark:text-gray-300 font-semibold text-base mr-4 whitespace-nowrap">
+                    Statistiques du Net Promoter Score (NPS)
+                  </h2>
+                  <div class="flex-grow border-t-4 border-gray-300 dark:border-gray-700"></div>
+                </div>
+                <!-- Cartes NPS -->
+                <div class="card bg-white/50 dark:bg-gray-800/70 p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
+                    <div class=" card h-auto  space-y-6 p-6 dark:bg-gray-800">
+                       <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Répartition génerale des Profils NPS</h3>
+                        <div class="card flex text-shadow-lg bg-emerald-50 dark:bg-emerald-900 border  border-emerald-700/40 py-3 px-6 rounded-full justify-between items-center">
+                          <div class="flex items-center gap-2">
+                            <p class="text-emerald-600 font-semibold text-base">Taux de promoteurs</p>
+                            <h2 class="text-2xl font-bold text-emerald-600">{{ pourcentage_promoteurs }}%</h2>
+                          </div>
+                            <div class="bg-emerald-50 dark:bg-emerald-900 rounded-full">
+                            <span class="text-emerald-600 text-3xl material-icons-round">sentiment_satisfied_alt</span>
+                            </div>
+                        </div>
+                        <div class="card flex bg-amber-50/50 dark:bg-amber-900/50 border border-amber-400/50 py-3 px-6  rounded-full justify-between items-center ">
+                          <div class="flex items-center gap-2">
+                            <p class="text-amber-500 font-semibold text-base">Taux des passifs</p>
+                            <h2 class="text-2xl font-bold text-amber-500 ">{{ pourcentage_passifs }}%</h2>
+                          </div>
+                            <div class="bg-amber-50/60 dark:bg-amber-900/60  rounded-full">
+                                <span class="text-amber-500 text-3xl material-icons-round">sentiment_neutral</span>
+                            </div>
+                        </div>
+                        <div class="card flex bg-rose-50 dark:bg-rose-900 border border-rose-600/40 py-3 px-6  rounded-full justify-between items-center ">
+                          <div class="flex items-center gap-2">
+                            <p class="text-rose-500 font-semibold text-base">Taux de detracteurs</p>
+                            <h2 class="text-2xl font-bold text-rose-500 ">{{ pourcentage_detracteurs }}%</h2>
+                          </div>
+                            <div class="bg-rose-50 dark:bg-rose-900  rounded-full">
+                                <span class="text-rose-500 text-3xl material-icons-round">sentiment_dissatisfied</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Score NPS global et jauge -->
+                    <div class="card p-6 space-y-8 justify-between dark:bg-gray-800">
+                        <div class="flex justify-between  items-start ">
+                            <div class=" space-y-4">
+                                   <h3 class="text-gray-500 dark:text-gray-300 text-sm">Score NPS Globale</h3>
+                                     <h3 class="text-4xl font-semibold text-gray-700 dark:text-gray-100 mb-4">{{nps_score}}</h3>
+                            </div>
+                        </div>
+                        <div>
+                           <div id="myChart" class="w-xl h-auto"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Graphiques NPS -->
+                <div class="grid card bg-white/50 dark:bg-gray-800/70 p-4 grid-cols-1 md:grid-cols-3 lg:grid-cols-2 gap-6 ">
+                    <div class="card p-6 dark:bg-gray-800">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Evolution des Profils NPS</h3>
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center">
+                                <div class="flex items-center mr-4">
+                                    <div class="w-3 h-3 bg-rose-500 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600 dark:text-gray-300">Detracteurs</span>
+                                </div>
+                                <div class="flex items-center mr-4">
+                                    <div class="w-3 h-3 bg-yellow-400 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600 dark:text-gray-300">Passifs</span>
+                                </div>
+                                <div class="flex items-center mr-4">
+                                    <div class="w-3 h-3 bg-emerald-500 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600 dark:text-gray-300">Promoteur</span>
+                                </div>
+                            </div>
+                            <form method="get" class=" space-y-4 mb-4">
+                              <!-- Sélecteur de période -->
+                              <select name="evolution_profil" 
+                                      class="border rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-gray-900 dark:text-gray-100" 
+                                      onchange="this.form.submit()">
+                                  <option value="">Toute l'année</option>
+                                  <option value="1" {% if request.GET.evolution_profil == '1' %}selected{% endif %}>Janvier - Juin</option>
+                                  <option value="2" {% if request.GET.evolution_profil == '2' %}selected{% endif %}>Juillet - Décembre</option>
+                              </select>
+                            
+                             <!-- Sélecteur d’année -->
+<select name="année2"
+        class="border rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-gray-900 dark:text-gray-100"
+        onchange="this.form.submit()">
+    <option value="">Toutes les années</option>
+    {% for annee in annees %}
+        <option value="{{ annee }}"
+            {% if request.GET.année2 %}
+                {% if request.GET.année2 == annee|stringformat:"s" %}selected{% endif %}
+            {% else %}
+                {% if forloop.first %}selected{% endif %}
+            {% endif %}
+        >
+            {{ annee }}
+        </option>
+    {% endfor %}
+</select>
+
+
+                            <input type="hidden" name="année" value="{{ request.GET.année|default_if_none:'' }}">
+                            <input type="hidden" name="evolution" value="{{ request.GET.evolution|default_if_none:'' }}">
+
+                     
+                          </form>
+
+                        </div>
+                        <div class="h-80">
+                            <canvas id="npsChart" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+                    <!-- Répartition NPS par région -->
+                    <div class="card p-6 dark:bg-gray-800">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Répartition Des Profils NPS par Région</h3>
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center">
+                                <div class="flex items-center mr-4">
+                                    <div class="w-3 h-3 bg-rose-500 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600 dark:text-gray-300">Detracteurs</span>
+                                </div>
+                                <div class="flex items-center mr-4">
+                                    <div class="w-3 h-3 bg-yellow-400 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600 dark:text-gray-300">Passifs</span>
+                                </div>
+                                <div class="flex items-center mr-4">
+                                    <div class="w-3 h-3 bg-emerald-500 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600 dark:text-gray-300">Promoteur</span>
+                                </div>
+                            </div>
+                            
+                        </div>
+                        <div class="h-80">
+                            <canvas id="regionBarChart" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             {% else %}
+        <div class="flex justify-center items-center h-96">
+            <p class="text-red-500 text-xl">Vous n'avez pas accès à ce contenu.</p>
+        </div>
+      {% endif %}
+    </main>
+
+<!-- Script principal pour la gestion de l'UI et des graphiques -->
+<script>
+ const sidebar = document.getElementById('sidebar');
+  const toggleSidebar = document.getElementById('toggleSidebar');
+  const mainContent = document.getElementById('mainContent');
+  const submenuIds = ['problemsSubmenu', 'ameliorationSubmenu'];
+  const sidebarState = sessionStorage.getItem('sidebarState');
+
+  function restoreSubmenus() {
+    submenuIds.forEach(id => {
+      const submenu = document.getElementById(id);
+      if (!submenu) return;
+      const open = localStorage.getItem(id) === 'open';
+      if (open) {
+        submenu.classList.remove('hidden');
+        submenu.style.maxHeight = submenu.scrollHeight + 'px';
+      } else {
+        submenu.classList.add('hidden');
+        submenu.style.maxHeight = '0';
+      }
+    });
+  }
+
+  function closeAllSubmenusVisualOnly() {
+    submenuIds.forEach(id => {
+      const submenu = document.getElementById(id);
+      if (!submenu || submenu.classList.contains('hidden')) return;
+      submenu.style.maxHeight = '0';
+      submenu.addEventListener('transitionend', () => submenu.classList.add('hidden'), { once: true });
+      // NE PAS modifier localStorage ici
+    });
+  }
+
+  // Appliquer l'état initial de la sidebar
+  if (sidebarState === 'open') {
+    sidebar.classList.add('w-60');
+    sidebar.classList.remove('collapsed');
+    mainContent.classList.add("ml-60");
+    mainContent.classList.remove("ml-24");
+    restoreSubmenus();
+  } else {
+    sidebar.classList.remove('w-60');
+    sidebar.classList.add('w-24');
+    mainContent.classList.remove("ml-60");
+    mainContent.classList.add("ml-24");
+    sidebar.classList.add('collapsed');
+    closeAllSubmenusVisualOnly();
+  }
+
+  // Bouton toggle de la sidebar
+  toggleSidebar.addEventListener('click', () => {
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    if (isCollapsed) {
+      sidebar.classList.remove('collapsed');
+      sidebar.classList.remove('w-24');
+      sidebar.classList.add('w-60');
+      mainContent.classList.add("ml-60");
+      mainContent.classList.remove("ml-24");
+      sessionStorage.setItem('sidebarState', 'open');
+      restoreSubmenus(); // 👈 Restaurer les sous-menus si besoin
+    } else {
+      sidebar.classList.add('collapsed');
+      sidebar.classList.add('w-24');
+      sidebar.classList.remove('w-60');
+      mainContent.classList.remove("ml-60");
+      mainContent.classList.add("ml-24");
+      sessionStorage.setItem('sidebarState', 'closed');
+      closeAllSubmenusVisualOnly(); // 👈 Fermer visuellement les sous-menus
+    }
+  });
+
+ // Positionnement du point CSAT sur la barre de progression
+  const csat = {{ csat_score }};
+  const pointcsat = document.getElementById("csat-point");
+  const percent_csat = (csat / 10) * 100;
+  pointcsat.style.left = `calc(${percent_csat}% - 12px)`;
+
+  // Initialisation du graphique NPS (ligne)
+  const npsctx = document.getElementById('npsChart').getContext('2d');
+  new Chart(npsctx, {
+    type: 'line',
+    data: {
+      labels:{{ liste_mois|safe }},  
+      datasets: [
+        {
+          label: 'Promoteur',
+          data: {{ nombre_promoteurs|safe }},  
+          borderColor: '#10B981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          borderWidth: 3,
+          tension: 0.4,
+          fill: false
+        },
+        {
+          label: 'Passif',
+          data: {{ nombre_passifs|safe }}, 
+          borderColor: '#FACC15',
+          backgroundColor: 'rgba(250, 204, 21, 0.1)',
+          borderWidth: 3,
+          tension: 0.4,
+          fill: false
+        },
+        {
+          label: 'Détracteur',
+          data: {{ nombre_detracteurs|safe }}, 
+          borderColor: '#F43F5E',
+          backgroundColor: 'rgba(244, 63, 94, 0.1)',
+          borderWidth: 3,
+          tension: 0.4,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+           title: {
+            display: true,
+            text: 'Nombre de clients'
+          },
+          ticks: {
+            font: {
+              size: 12
+            }
+          },
+          beginAtZero: true
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        }
+      }
+    }
+  });
+
+// Initialisation du graphique CSAT (ligne)
+const csatctx = document.getElementById('csatChart').getContext('2d');
+new Chart(csatctx, {
+  type: 'line',
+  data: {
+    labels: {{ mois_labels|safe }},
+    datasets: [
+      {
+        label: 'Promoteur',
+        data: {{ Promoteur_counts|safe }},
+        borderColor: '#10B981',
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        borderWidth: 3,
+        tension: 0.4,
+        fill: false
+      },
+      {
+        label: 'Détracteur',
+        data: {{ insatisafait_counts|safe }},
+        borderColor: '#F43F5E',
+        backgroundColor: 'rgba(244, 63, 94, 0.1)',
+        borderWidth: 3,
+        tension: 0.4,
+        fill: false
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        title: {
+          display: true,
+          text: 'Nombre de clients'
+        },
+        ticks: {
+          font: {
+            size: 12
+          }
+        },
+        beginAtZero: true
+      }
+    },
+    plugins: {
+      legend: {
+        display: false
+      }
+    }
+  }
+});
+
+  // Initialisation du graphique NPS par région (barres empilées)
+  const npsregionctx = document.getElementById('regionBarChart').getContext('2d');
+  new Chart(npsregionctx, {
+    type: 'bar',
+    data: {
+      labels: {{ liste_bu|safe }},
+      datasets: [
+        {
+          label: 'Promoteur',
+          data:{{ nombre_promoteurss|safe }},
+          backgroundColor: 'rgba(16, 185, 129, 0.5)',
+          borderColor: '#10B981',
+          borderWidth: 2
+        },
+        {
+          label: 'Passif',
+          data: {{ nombre_passifss|safe }},
+          backgroundColor: 'rgba(255, 211, 0, 0.5)',
+          borderColor: '#FFD300',
+          borderWidth: 2
+        },
+        {
+          label: 'Détracteur',
+          data:{{ nombre_detracteurss|safe }},
+          backgroundColor: 'rgba(244, 63, 94, 0.5)',
+          borderColor: '#F43F5E',
+          borderWidth: 2
+        }
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        x: {
+          stacked: true
+        },
+        y: {
+          stacked: true,
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+  // Initialisation du graphique CSAT par tranche d'âge (barres groupées)
+  const npsAgectx = document.getElementById('groupedBarChart').getContext('2d');
+  new Chart(npsAgectx, {
+    type: 'bar',
+    data: {
+      labels:{{ age_labels|safe }},
+      datasets: [
+        {
+          label: 'Satisfait',
+          data: {{ age_counts|safe }},
+          backgroundColor: '#10B981',
+           borderRadius: 6
+        },
+        {
+          label: 'Insatisfait',
+          data: {{ age1_counts|safe }},
+          backgroundColor: '#F43F5E',
+            borderRadius: 6
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          stacked: false,
+          title: {
+            display: true,
+            text: 'Tranche d’âge'
+          },
+          ticks: {
+            font: {
+              size: 12
+            }
+          }
+        },
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Nombre de clients'
+          },
+          ticks: {
+            stepSize: 10
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          mode: 'index',
+          intersect: false
+        }
+      }
+    }
+  });
+
+  // Initialisation de la jauge NPS (AG Charts)
+  const { AgCharts } = agCharts;
+  const options = {
+    label: {
+          formatter({ value }) {
+              return `${value.toFixed(2)}`;
+          },
+      },
+      cornerRadius: 99,
+      cornerMode: 'container',
+      scale: {
+          label: {
+              enabled: false,
+          },
+      },
+      needle: {
+          enabled: true,
+      },
+      bar: {
+          enabled: false,
+      },
+      bar: {
+          fills: [
+              { color: '#F43F5E', stop: 0 },
+              { color: '#FBC531', stop: 29 },
+              { color: '#4CD137', stop: 70 },
+              { color: '#10B981' },
+          ],
+          fillMode: 'discrete',
+      },
+      type: "radial-gauge",
+      container: document.getElementById("myChart"),
+      value: 7,
+      scale: {
+        min: -100,
+        max: 100,
+      },
+  };
+  AgCharts.createGauge(options);
+</script>
+
+<!-- Fin du document HTML -->
+
+</body>
+</html>

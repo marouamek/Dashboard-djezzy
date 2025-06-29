@@ -1,0 +1,680 @@
+<html lang="fr">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Importation de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+  
+    <script>
+        // Configuration Tailwind pour la police personnalisée
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        coreSans: ['"Core Sans C"', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+
+  <style>
+    /* Variables CSS pour les couleurs principales */
+    :root {
+                --primary-red: #e53e3e;
+                --dark-gray: #2d3748;
+                --light-gray: #edf2f7;
+                --white: #ffffff;
+            }
+    /* Masquer le texte du menu si la sidebar est réduite */
+    .collapsed .menu-text {
+      display: none;
+    }
+    /* Centrer les icônes du menu si la sidebar est réduite */
+    .collapsed .menu-icon {
+      justify-content: center;
+    }
+    /* Style de la sidebar */
+    .sidebar {
+        background-color: var(--white);
+        border-right: 1px solid #e2e8f0;
+        height: 100vh;
+        position: fixed;
+        width: 280px;
+        transition: all 0.3s;
+        z-index: 10;
+    }
+    /* Sidebar réduite */
+    .sidebar-collapsed {
+        width: 80px;
+    }
+    /* Style des cartes (cards) */
+    .card {
+        background-color: var(--white);
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    /* Séparateur de section */
+    .section-divider {
+        border-top: 1px solid #e2e8f0;
+        margin: 10px 0;
+    }
+    /* Bouton de toggle caché par défaut */
+    .toggle-btn {
+        display: none;
+    }
+    /* Animation de la sidebar */
+     #sidebar {
+      transition: width 0.3s ease,background-color 0.7s, color 0.7s;
+    }
+
+     #darkModeIcon {
+        transition: transform 0.3s ease;
+        }
+    #toggleDarkMode:hover #darkModeIcon {
+        transform: rotate(180deg);
+        }
+    body, .card, header, aside, main {
+    transition: background-color 0.7 ease, color 0.7s ease, border-color 0.4s ease;
+    }
+  </style>
+  <!-- Importation des polices Google Fonts et des icônes Material -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Core+Sans+C:wght@400;700&display=swap" rel="stylesheet">
+  
+
+    <title>Dashboard Satisfaction Client - Djezzy</title>
+    
+    <!-- Importation des librairies de graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ag-charts-enterprise@11.3.0/dist/umd/ag-charts-enterprise.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-geo@4.2.3/build/index.umd.min.js"></script>
+    <script src='https://cdn.plot.ly/plotly-3.0.1.min.js'></script>
+
+</head>
+<body class="bg-gray-200 dark:bg-gray-950 text-sm h-max md:min-h-full font-coreSans">
+    <div class="flex h-full bg-gray-50 dark:bg-gray-900">
+    <!-- Inclusion de la barre latérale -->
+    {% include "sidebarHome.html" %}
+    
+    <main id="mainContent" class="overflow-x-hidden flex-grow transition-all duration-300 max-w-full bg-gray-200 dark:bg-gray-950">
+        <!-- En-tête du dashboard -->
+        {% if user.is_authenticated and user.profile.role == 'bi_agent' or user.profile.role == 'call_center' or user.profile.role == 'customer_care' %}
+        
+        <header class="flex justify-between items-center bg-gray-50 dark:bg-gray-900 px-10 py-4 drop-shadow-sm">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Djezzy_Logo_2015.svg/696px-Djezzy_Logo_2015.svg.png" alt="Logo" class="w-12 h-auto">
+        <p class="text-gray-500 dark:text-gray-300 text-base font-medium"> {% now "l d F Y" %}</p>
+        <p class="text-gray-500 dark:text-gray-300 text-xl font-medium"> {% now " H:i " %}</p>
+        {% include "upper_bar_option.html" %}
+      </header>
+
+      <div class="p-10">
+        <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-10">Analyse des Clients et Statistique Générale</h1>
+            <!-- Cartes de statistiques principales -->
+            <div class="grid card bg-white/50 dark:bg-gray-800/70 p-4  flex grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div class="card p-6 space-y-8 justify-between dark:bg-gray-800">
+                    <div class="flex justify-between  items-start mb-4">
+                        <div class=" space-y-4">
+                            <p class="text-gray-500 dark:text-gray-300 text-sm">Total Clients</p>
+                            <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100">{{ total_clients }}</h2>
+                        </div>
+                        <div class="bg-orange-100 dark:bg-orange-900 p-3 rounded-full">
+                           <span class="material-icons-round text-orange-500">groups</span>
+                        </div>
+                    </div>
+                   
+                </div>
+                <div class="card space-y-8  p-6 dark:bg-gray-800">
+                    <div class="flex justify-between  items-start mb-4">
+                        <div class=" space-y-4">
+                            <p class="text-gray-500 dark:text-gray-300 text-sm">Nombre de client Actif</p>
+                            <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100">{{ clients_actifs }}</h2>
+                        </div>
+                        <div class="bg-emerald-100 dark:bg-emerald-900 p-3 rounded-full">
+                           <span class="text-emerald-500 material-icons-round">person_add</span>
+                        </div>
+                    </div>
+                    
+                </div>
+                <div class="card p-6 dark:bg-gray-800">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class=" space-y-4">
+                            <p class="text-gray-500 dark:text-gray-300 text-sm">Nombre de client Terminé</p>
+                            <h2 class="text-4xl font-bold text-gray-800 dark:text-gray-100">{{ clients_termines }}</h2>
+                        </div>
+                        <div class="bg-rose-100 dark:bg-rose-900 p-3 rounded-full">
+                         <span class="text-rose-500 material-icons-round">person_remove</span>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        <!-- Section des graphiques principaux -->
+        <div class="grid card bg-white/50 dark:bg-gray-800/70 p-4  flex grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
+          <!-- Graphique : Répartition des clients par tranche d'age -->
+          <div class="card p-6 bg-white dark:bg-gray-800 shadow rounded-lg">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4"> Répartition des clients par tranche d'age</h2>
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center">
+                    <div class="flex items-center mr-4">
+                        <div class="w-3 h-3 bg-emerald-500 rounded-full mr-2"></div>
+                        <span class="text-sm text-gray-600 dark:text-gray-300">Client</span>
+                    </div>
+                </div>
+            </div>
+            <canvas id="stackedBarChart" ></canvas>
+          </div>
+          <!-- Graphique : Répartition des client par Type -->
+           <div class="card p-6 bg-white dark:bg-gray-800 shadow rounded-lg">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Répartition des client par Type</h2>
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center">
+                    <div class="flex items-center mr-4">
+                        <div class="w-3 h-3 bg-rose-500 rounded-full mr-2"></div>
+                        <span class="text-sm text-gray-600 dark:text-gray-300">Client</span>
+                    </div>
+                </div>
+            </div>
+            <canvas id="stackedBarCharttype" ></canvas>
+          </div>
+          <!-- Graphique : Répartition des clients par Type de souscription -->
+           <div class="card p-6 bg-white dark:bg-gray-800 shadow rounded-lg">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4"> Répartition des clients par Type de souscription </h2>
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center">
+                    <div class="flex items-center mr-4">
+                        <div class="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
+                        <span class="text-sm text-gray-600 dark:text-gray-300">Client</span>
+                    </div>
+                </div>
+            </div>
+            <canvas id="souscriptionChart" ></canvas>
+          </div>
+          <!-- Graphique : Répartition des Clients par Tranche d'Ancienneté -->
+         <div class="card p-6 bg-white dark:bg-gray-800 shadow rounded-lg">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Répartition des Clients par Tranche d'Ancienneté</h2>
+             <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center">
+                    <div class="flex items-center mr-4">
+                        <div class="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
+                        <span class="text-sm text-gray-600 dark:text-gray-300">Client</span>
+                    </div>
+                </div>
+            </div>
+            <canvas id="ancienneteChart" class="w-full h-auto"></canvas>
+          </div>
+        </div>
+        <!-- Section des graphiques secondaires -->
+        <div class="grid card bg-white/50 dark:bg-gray-800/70 p-4  flex grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
+          <!-- Graphique : Répartition des Client par Offres Utlisées -->
+         <div class="card p-6 bg-white dark:bg-gray-800 shadow rounded-lg">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Répartition des Client par Offres Utlisées</h2>
+           <canvas id="offreChart" style="width:300px ; height: 380px;"></canvas>
+          </div>
+          <!-- Graphique : Répartition des clients geographiquement -->
+         <div class="card p-6 bg-white dark:bg-gray-800 shadow rounded-lg">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Répartition des clients geographiquement</h2>
+            <div id='myDiv' style="width:460px ; height: 500px;"></div>
+          </div>
+        </div>
+
+      </div>
+       {% else %}
+        <div class="flex justify-center items-center h-96">
+            <p class="text-red-500 text-xl">Vous n'avez pas accès à ce contenu.</p>
+        </div>
+      {% endif %}
+    </main>
+
+
+</body>
+</html>
+
+<script>
+ const sidebar = document.getElementById('sidebar');
+  const toggleSidebar = document.getElementById('toggleSidebar');
+  const mainContent = document.getElementById('mainContent');
+  const submenuIds = ['problemsSubmenu', 'ameliorationSubmenu'];
+  const sidebarState = sessionStorage.getItem('sidebarState');
+
+  function restoreSubmenus() {
+    submenuIds.forEach(id => {
+      const submenu = document.getElementById(id);
+      if (!submenu) return;
+      const open = localStorage.getItem(id) === 'open';
+      if (open) {
+        submenu.classList.remove('hidden');
+        submenu.style.maxHeight = submenu.scrollHeight + 'px';
+      } else {
+        submenu.classList.add('hidden');
+        submenu.style.maxHeight = '0';
+      }
+    });
+  }
+
+  function closeAllSubmenusVisualOnly() {
+    submenuIds.forEach(id => {
+      const submenu = document.getElementById(id);
+      if (!submenu || submenu.classList.contains('hidden')) return;
+      submenu.style.maxHeight = '0';
+      submenu.addEventListener('transitionend', () => submenu.classList.add('hidden'), { once: true });
+      // NE PAS modifier localStorage ici
+    });
+  }
+
+  // Appliquer l'état initial de la sidebar
+  if (sidebarState === 'open') {
+    sidebar.classList.add('w-60');
+    sidebar.classList.remove('collapsed');
+    mainContent.classList.add("ml-60");
+    mainContent.classList.remove("ml-24");
+    restoreSubmenus();
+  } else {
+    sidebar.classList.remove('w-60');
+    sidebar.classList.add('w-24');
+    mainContent.classList.remove("ml-60");
+    mainContent.classList.add("ml-24");
+    sidebar.classList.add('collapsed');
+    closeAllSubmenusVisualOnly();
+  }
+
+  // Bouton toggle de la sidebar
+  toggleSidebar.addEventListener('click', () => {
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    if (isCollapsed) {
+      sidebar.classList.remove('collapsed');
+      sidebar.classList.remove('w-24');
+      sidebar.classList.add('w-60');
+      mainContent.classList.add("ml-60");
+      mainContent.classList.remove("ml-24");
+      sessionStorage.setItem('sidebarState', 'open');
+      restoreSubmenus(); // 👈 Restaurer les sous-menus si besoin
+    } else {
+      sidebar.classList.add('collapsed');
+      sidebar.classList.add('w-24');
+      sidebar.classList.remove('w-60');
+      mainContent.classList.remove("ml-60");
+      mainContent.classList.add("ml-24");
+      sessionStorage.setItem('sidebarState', 'closed');
+      closeAllSubmenusVisualOnly(); // 👈 Fermer visuellement les sous-menus
+    }
+  });
+
+ // Couleur du texte pour tous les charts
+const chartTextColor = '#8f8d8d'; // gris Tailwind text-gray-500
+
+// 1. Répartition des clients par tranche d'age (Bar Chart)
+const config = {
+  type: 'bar',
+  data: {
+    labels: {{ age_abonne_labels|safe }}, 
+    datasets: [
+      {
+        label: 'Clients Actifs',
+        data: {{ age_abonne_counts|safe }}, 
+        backgroundColor: 'rgba(16, 185, 129, 0.5)',
+        borderColor: '#10B981',
+        borderWidth: 2,
+        borderRadius: 6
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      tooltip: {
+        mode: 'index',
+        intersect: false
+      },
+      legend: {
+        display: false,
+        labels: {
+          color: chartTextColor
+        }
+      }
+    },
+    interaction: {
+      mode: 'index',
+      intersect: false
+    },
+    scales: {
+      x: {
+        stacked: true,
+        title: {
+          display: true,
+          text: 'Tranche d’âge',
+          color: chartTextColor
+        },
+        ticks: {
+          color: chartTextColor
+        }
+      },
+      y: {
+        stacked: true,
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Nombre de clients',
+          color: chartTextColor
+        },
+        ticks: {
+          color: chartTextColor
+        }
+      }
+    }
+  }
+};
+
+new Chart(
+  document.getElementById('stackedBarChart'),
+  config
+);
+
+// 2. Répartition des client par Type (Bar Chart)
+const configtype = {
+  type: 'bar',
+  data: {
+    labels: {{ type_labels|safe }},
+    datasets: [
+      {
+        label: 'Clients Actifs',
+        data: {{ type_counts|safe }},
+        backgroundColor: 'rgba(255, 179, 186, 0.5)',
+        borderColor: '#FF4F5E',
+        borderWidth: 2,
+        borderRadius: 6
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      tooltip: {
+        mode: 'index',
+        intersect: false
+      },
+      legend: {
+        display: false,
+        labels: {
+          color: chartTextColor
+        }
+      }
+    },
+    interaction: {
+      mode: 'index',
+      intersect: false
+    },
+    scales: {
+      x: {
+        stacked: true,
+        title: {
+          display: true,
+          text: 'Type de client',
+          color: chartTextColor
+        },
+        ticks: {
+          color: chartTextColor
+        }
+      },
+      y: {
+        stacked: true,
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Nombre de clients',
+          color: chartTextColor
+        },
+        ticks: {
+          color: chartTextColor
+        }
+      }
+    }
+  }
+};
+
+new Chart(
+  document.getElementById('stackedBarCharttype'),
+  configtype
+);
+
+// 3. Répartition des clients par Type de souscription (Bar Chart)
+ctxSouscription = document.getElementById('souscriptionChart').getContext('2d');
+const souscriptionData = {
+  labels: {{ souscription_labels|safe }},
+  datasets:
+    [{
+      label: 'Nombre de Clients',
+      data: {{ souscription_counts|safe }},
+      backgroundColor: 'rgba(215, 186, 255, 0.5)',
+      borderColor: '#A05EFF',
+      borderWidth: 2,
+      borderRadius: 6
+    }]
+};
+const configSouscription = {
+  type: 'bar',
+  data: souscriptionData,
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        display: false,
+        labels: {
+          color: chartTextColor
+        }
+      },
+      tooltip: {
+        mode: 'index',
+        intersect: false
+      }
+    },
+    scales: {
+      x: {
+        title:
+        {
+          display: true,
+          text: 'Type de souscription',
+          color: chartTextColor
+        },
+        ticks: {
+          color: chartTextColor
+        }
+      },
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Nombre de clients',
+          color: chartTextColor
+        },
+        ticks: {
+          color: chartTextColor
+        }
+      }
+    }
+  }
+};
+new Chart(ctxSouscription, configSouscription);
+
+// 4. Répartition des Clients par Tranche d'Ancienneté (Bar Chart)
+const ancienneteChart = new Chart(document.getElementById('ancienneteChart'), {
+  type: 'bar',
+  data: {
+    labels:  {{ age_client_labels|safe }}, 
+    datasets: [{
+      label: 'Clients',
+      data:  {{ age_client_counts|safe }}, 
+      backgroundColor: 'rgba(255, 137, 0, 0.5)',
+      borderColor: '#FF8C00',
+      borderWidth: 2,
+      borderRadius: 6
+    }]
+  },
+  options: {
+    plugins: {
+      legend: {
+        display: false,
+        labels: {
+          color: chartTextColor
+        }
+      }
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: chartTextColor
+        },
+        title: {
+          color: chartTextColor
+        }
+      },
+      y: {
+        ticks: {
+          color: chartTextColor
+        },
+        title: {
+          color: chartTextColor
+        }
+      }
+    }
+  }
+});
+
+// 5. Répartition des Client par Offres Utlisées (Pie Chart)
+const offrectx = document.getElementById('offreChart').getContext('2d');
+
+const labels = {{ labels|safe }};
+
+const pastelColors = [
+  '#FFB3BA', '#FFDFBA', '#FFFFBA', '#BAFFC9', '#BAE1FF',
+  '#D7BAFF', '#FFCBAE', '#C3FBD8', '#FDCBFF', '#B5EAD7',
+  '#E2F0CB', '#C7CEEA', '#FFDAC1', '#E0BBE4', '#D5AAFF',
+  '#FFD6A5', '#A0E7E5', '#BDB2FF', '#FFADAD'
+];
+
+const borderColors = [
+  '#FF4F5E', '#FFA351', '#FFF200', '#1DE881', '#3BB5FF',
+  '#A05EFF', '#FF9054', '#1BE295', '#F471FF', '#59D9B2',
+  '#C4E038', '#7D8BFF', '#FF9A72', '#B765C9', '#A74AFF',
+  '#FF8C3B', '#00C9C8', '#735FFF', '#FF4D4D'
+];
+
+const data = {
+  labels: labels,
+  datasets: [{
+    data: {{ counts|safe }}, 
+    backgroundColor: pastelColors,
+    borderColor: borderColors,
+    borderWidth: 2
+  }]
+};
+
+const config1 = {
+  type: 'pie',
+  data: data,
+  options: {
+    responsive: true,
+    radius: '80%',  
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: {
+          boxWidth: 20,
+          color: chartTextColor
+        }
+      },
+    }
+  }
+};
+
+new Chart(offrectx, config1);
+
+  // 6. Répartition des clients geographiquement (Carte Plotly)
+  const wilayas = {{ wilayas|safe }};
+
+  const buColors = {
+    'ALGER': '#2dee2a ',
+    'ORAN': '#BDB2FF',
+    'TLEMCEN': '#ffad55  ',
+    'SETIF': '#00b47b ',
+    'SUD': '#ee2aac  ',
+    'CENTRE': '#00ffbd ',
+    'CONSTANTINE': '#0061ff '
+  };
+
+  const traces = [];
+  const grouped = {};
+
+  // Regroupement des wilayas par BU
+  for (const w of wilayas) {
+    if (!grouped[w.bu]) grouped[w.bu] = [];
+    grouped[w.bu].push(w);
+  }
+
+  // Création des traces pour chaque BU
+  for (const bu in grouped) {
+    const group = grouped[bu];
+    traces.push({
+      type: 'scattergeo',
+      mode: 'markers',
+      name: bu,
+      lat: group.map(g => g.lat),
+      lon: group.map(g => g.lon),
+      text: group.map(g => `${g.name}<br>Clients: ${g.clients}`),
+      hoverinfo: 'text',
+      marker: {
+        size: group.map(g => Math.sqrt(g.clients) * 2),
+        color: buColors[bu],
+        line: { color: 'white', width: 1 },
+        sizemode: 'area',
+        opacity: 0.8
+      }
+    });
+  }
+
+  // Configuration de la carte Plotly
+  const layout = {
+    title: 'Client Distribution in Algeria',
+    geo: {
+      scope: 'africa',
+      center: { lat: 28, lon: 3 },
+      projection: { type: 'natural earth' },
+      lataxis: { range: [20, 38] },
+      lonaxis: { range: [-9, 18] },
+      showland: true,
+      landcolor: '#d6ffd4',
+      showocean: true,
+      oceancolor: '#a1ebf1 ',
+      countrycolor: '#444',
+      showcountries: true,
+      countrycolor: '#56a353 ',
+      coastlinecolor: '#56a353 ',
+      showcoastlines: true,
+      bgcolor: '#f2f2f2'
+    },
+    margin: {
+      l: 20,
+      r: 20,
+      t: 0,
+      b: 20
+    },
+    legend: {
+      x: -0.2,
+      y: 0.9,
+      orientation: 'v',
+      title: { text: 'BU' }
+    }
+  };
+
+  // Affichage de la carte Plotly
+  Plotly.newPlot('myDiv', traces, layout);
+</script>
+
+</body>
+</html>

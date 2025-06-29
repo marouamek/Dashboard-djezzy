@@ -1,0 +1,529 @@
+<!-- Début du document HTML principal -->
+<html lang="fr">
+    <head>
+    <!-- Métadonnées et configuration Tailwind CSS -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+  
+     <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        coreSans: ['"Core Sans C"', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+
+ <style>
+    /* Variables CSS pour les couleurs principales */
+    :root {
+                --primary-red: #e53e3e;
+                --dark-gray: #2d3748;
+                --light-gray: #edf2f7;
+                --white: #ffffff;
+            }
+    /* Masquer le texte du menu si la sidebar est réduite */
+    .collapsed .menu-text {
+      display: none;
+    }
+    /* Centrer les icônes du menu si la sidebar est réduite */
+    .collapsed .menu-icon {
+      justify-content: center;
+    }
+    /* Style de la sidebar */
+    .sidebar {
+        background-color: var(--white);
+        border-right: 1px solid #e2e8f0;
+        height: 100vh;
+        position: fixed;
+        width: 280px;
+        transition: all 0.3s;
+        z-index: 10;
+    }
+    /* Sidebar réduite */
+    .sidebar-collapsed {
+        width: 80px;
+    }
+    /* Style des cartes (cards) */
+    .card {
+        background-color: var(--white);
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    /* Séparateur de section */
+    .section-divider {
+        border-top: 1px solid #e2e8f0;
+        margin: 10px 0;
+    }
+    /* Bouton de toggle caché par défaut */
+    .toggle-btn {
+        display: none;
+    }
+    /* Animation de la sidebar */
+     #sidebar {
+      transition: width 0.3s ease,background-color 0.7s, color 0.7s;
+    }
+
+     #darkModeIcon {
+        transition: transform 0.3s ease;
+        }
+    #toggleDarkMode:hover #darkModeIcon {
+        transform: rotate(180deg);
+        }
+    body, .card, header, aside, main {
+    transition: background-color 0.7 ease, color 0.7s ease, border-color 0.4s ease;
+    }
+  </style>
+
+  <!-- Liens vers les polices et styles externes -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Core+Sans+C:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+   <link
+      rel="stylesheet"
+      href="/charts/vanilla/radial-gauge/examples/simple-radial-gauge/ag-example-styles.css"
+    />
+
+    <!-- Titre de la page -->
+    <title>Dashboard Amelioration des Prix et Tarifications - Djezzy</title>
+    
+    <!-- Inclusion des librairies de graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-gauge"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ag-charts-enterprise@11.3.0/dist/umd/ag-charts-enterprise.js?t=1747399301504"></script>
+    <script src="/charts/vanilla/radial-gauge/examples/simple-radial-gauge/main.js"></script>
+</head>
+<body class="bg-gray-200 text-sm h-max md:min-h-full font-coreSans">
+    <div class="flex h-full bg-gray-50">
+    <!-- Inclusion de la barre latérale -->
+    {% include "sidebarHome.html" %}
+    
+    <main id="mainContent" class="overflow-x-hidden flex-grow transition-all duration-300 max-w-full bg-gray-200 dark:bg-gray-950">
+        <!-- En-tête du dashboard -->
+        {% if user.is_authenticated and user.profile.role == 'bi_agent' or user.profile.role == 'call_center' or user.profile.role == 'customer_care' %}
+        
+        <header class="flex justify-between items-center bg-gray-50 dark:bg-gray-900 px-10 py-4 drop-shadow-sm">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Djezzy_Logo_2015.svg/696px-Djezzy_Logo_2015.svg.png" alt="Logo" class="w-12 h-auto">
+        <p class="text-gray-500 dark:text-gray-300 text-base font-medium"> {% now "l d F Y" %}</p>
+        <p class="text-gray-500 dark:text-gray-300 text-xl font-medium"> {% now " H:i " %}</p>
+        {% include "upper_bar_option.html" %}
+      </header>
+
+           
+            
+        <div class="px-10 pb-10">
+            <nav class="mb-10 mt-5">
+              <ul class="flex justify-between w-full gap-8">
+                    <li class="flex-1">
+                        <a href="{% url 'problem_internet' %}" class="block card p-6 w-full text-center px-4 py-2 bg-rose-500 text-white font-bold shadow-lg hover:bg-rose-600">Internet</a>
+                    </li>
+                    <li class="flex-1">
+                        <a href="{% url 'problem_appel' %}" class="block card p-6 w-full text-center px-4 py-2 bg-blue-500 text-white font-bold shadow-lg hover:bg-blue-600">Appel</a>
+                    </li>
+                    <li class="flex-1">
+                        <a href="{% url 'problem_service' %}" class="block card p-6 w-full text-center px-4 py-2 bg-yellow-500 text-white font-bold shadow-lg hover:bg-yellow-600">Service</a>
+                    </li>
+                    <li class="flex-1">
+                        <a href="{% url 'problem_tarification' %}" class="block card p-6 w-full text-center px-4 py-2 bg-green-500 text-white font-bold shadow-lg hover:bg-green-600">Tarification</a>
+                    </li>
+                    <li class="flex-1">
+                        <a href="{% url 'problem_offre' %}" class="block card p-6 w-full text-center px-4 py-2 bg-orange-500 text-white font-bold shadow-lg hover:bg-orange-600">Offre</a>
+                    </li>
+              </ul>
+           </nav>
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Tableau de bord des Problèmes</h1>
+                        <p class="text-gray-600 dark:text-gray-100">Vue d'ensemble des problèmes signalés par les clients</p>
+                    </div>
+                       {% include "filter.html" %}
+                </div>
+                
+               <!-- Menu navigation -->      
+                <div class="grid grid-cols-3 dark:bg-gray-800/70 gap-6 mb-8 card bg-white/50 p-4 ">
+
+                    <!-- Left grid -->
+                    <div class="col-span-2 flex flex-col gap-6">
+
+                        <!-- Répartition des Problemes dans le temps -->
+                        <div class="col-span-2 dark:bg-gray-800 card p-6">
+                          <h3 class="text-lg font-semibold dark:text-gray-100 text-gray-800 mb-4">Évolution des Problemes dans le Temps</h3>
+                            <div class="flex justify-between items-center mb-4">
+                                <div class="flex  items-center">
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-[#FF6384]"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Problemes Internet</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-[#36A2EB]"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Problemes Appel</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-[#FACC15]"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Problemes Service</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-[#10B981]"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Problemes Tarification</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-[#FFA726]"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Problemes Offre</span>
+                                    </div>
+                                </div>
+                            
+                               
+                            </div>
+                            <div class="flex  items-center">
+                                <canvas id="ProblemesOffreChart" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Répartition des Problemes par Region -->
+                        <div class="col-span-2 dark:bg-gray-800 card p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Répartition des Problemes par Région</h3>
+                             <div class="flex justify-between items-end mb-4">
+                                <div class="flex grid grid-cols-2 gap-3 items-center mb-4">
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-[#FF6384]"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Problemes Internet</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-[#36A2EB]"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Problemes Appel</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-[#FACC15]"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Problemes Service</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-[#10B981]"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Problemes Tarification</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-[#FFA726]"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Problemes Offre</span>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                            <div class="h-96 mt-8">
+                                <canvas id="regionBarChart" class="w-full h-full"></canvas>
+                            </div>        
+                        </div> 
+                    </div>
+                    
+                    <!-- Right grid -->
+                    <div class="col-span-1 flex flex-col gap-6">
+                        <div  class="card p-6 flex-1 dark:bg-gray-800">
+                            <div class="flex justify-between  items-start mb-4">
+                                <div class=" space-y-4">
+                                    <p class="text-gray-500 text-sm dark:border-gray-100 dark:text-gray-100">Total Clients reportant des Problemes d'Internet</p>
+                                    <h2 class="text-3xl font-bold dark:text-gray-100 text-gray-800">{{ p1 }}</h2>
+                                </div>
+                                <div class="bg-orange-100 p-3 rounded-full">
+                                    <span class="material-icons-round text-orange-500">wifi</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div  class="card p-6 flex-1 dark:bg-gray-800">
+                            <div class="flex justify-between  items-start mb-4">
+                                <div class=" space-y-4">
+                                    <p class="text-gray-500 text-sm dark:border-gray-100 dark:text-gray-100">Total Clients reportant des Problemes d'Appel</p>
+                                    <h2 class="text-3xl font-bold dark:text-gray-100 text-gray-800">{{ p2 }}</h2>
+                                </div>
+                                <div class="bg-orange-100 p-3 rounded-full">
+                                    <span class="material-icons-round text-orange-500">call</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div  class="card p-6 flex-1 dark:bg-gray-800">
+                            <div class="flex justify-between  items-start mb-4">
+                                <div class=" space-y-4">
+                                    <p class="text-gray-500 text-sm dark:border-gray-100 dark:text-gray-100">Total Clients reportant des Problemes de Service</p>
+                                    <h2 class="text-3xl font-bold dark:text-gray-100 text-gray-800">{{ p3 }}</h2>
+                                </div>
+                                <div class="bg-orange-100 p-3 rounded-full">
+                                    <span class="material-icons-round text-orange-500">help</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div  class="card p-6 flex-1 dark:bg-gray-800">
+                            <div class="flex justify-between  items-start mb-4">
+                                <div class=" space-y-4">
+                                    <p class="text-gray-500 text-sm dark:border-gray-100 dark:text-gray-100">Total Clients reportant des Problemes de Tarification</p>
+                                    <h2 class="text-3xl font-bold dark:text-gray-100 text-gray-800">{{ p4 }}</h2>
+                                </div>
+                                <div class="bg-orange-100 p-3 rounded-full">
+                                    <span class="material-icons-round text-orange-500">attach_money</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div  class="card p-6 flex-1 dark:bg-gray-800">
+                            <div class="flex justify-between  items-start mb-4">
+                                <div class=" space-y-4">
+                                    <p class="text-gray-500 text-sm dark:text-gray-100">Pourcentage Clients reportant des Problemes d'Offre</p>
+                                    <h2 class="text-3xl font-bold dark:text-gray-100 text-gray-800">{{ p5 }}</h2>
+                                </div>
+                                <div class="bg-orange-100 p-3 rounded-full">
+                                    <span class="text-orange-500 material-icons-round">sell</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                </div>
+        </main>
+    </div>
+               {% else %}
+        <div class="flex justify-center items-center h-96">
+            <p class="text-red-500 text-xl">Vous n'avez pas accès à ce contenu.</p>
+        </div>
+      {% endif %}
+    </main>
+    </main>
+
+<!-- Script principal pour la gestion de l'UI et des graphiques -->
+<script>
+ const sidebar = document.getElementById('sidebar');
+  const toggleSidebar = document.getElementById('toggleSidebar');
+  const mainContent = document.getElementById('mainContent');
+  const submenuIds = ['problemsSubmenu', 'ameliorationSubmenu'];
+  const sidebarState = sessionStorage.getItem('sidebarState');
+
+  function restoreSubmenus() {
+    submenuIds.forEach(id => {
+      const submenu = document.getElementById(id);
+      if (!submenu) return;
+      const open = localStorage.getItem(id) === 'open';
+      if (open) {
+        submenu.classList.remove('hidden');
+        submenu.style.maxHeight = submenu.scrollHeight + 'px';
+      } else {
+        submenu.classList.add('hidden');
+        submenu.style.maxHeight = '0';
+      }
+    });
+  }
+
+  function closeAllSubmenusVisualOnly() {
+    submenuIds.forEach(id => {
+      const submenu = document.getElementById(id);
+      if (!submenu || submenu.classList.contains('hidden')) return;
+      submenu.style.maxHeight = '0';
+      submenu.addEventListener('transitionend', () => submenu.classList.add('hidden'), { once: true });
+      // NE PAS modifier localStorage ici
+    });
+  }
+
+  // Appliquer l'état initial de la sidebar
+  if (sidebarState === 'open') {
+    sidebar.classList.add('w-60');
+    sidebar.classList.remove('collapsed');
+    mainContent.classList.add("ml-60");
+    mainContent.classList.remove("ml-24");
+    restoreSubmenus();
+  } else {
+    sidebar.classList.remove('w-60');
+    sidebar.classList.add('w-24');
+    mainContent.classList.remove("ml-60");
+    mainContent.classList.add("ml-24");
+    sidebar.classList.add('collapsed');
+    closeAllSubmenusVisualOnly();
+  }
+
+  // Bouton toggle de la sidebar
+  toggleSidebar.addEventListener('click', () => {
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    if (isCollapsed) {
+      sidebar.classList.remove('collapsed');
+      sidebar.classList.remove('w-24');
+      sidebar.classList.add('w-60');
+      mainContent.classList.add("ml-60");
+      mainContent.classList.remove("ml-24");
+      sessionStorage.setItem('sidebarState', 'open');
+      restoreSubmenus(); // 👈 Restaurer les sous-menus si besoin
+    } else {
+      sidebar.classList.add('collapsed');
+      sidebar.classList.add('w-24');
+      sidebar.classList.remove('w-60');
+      mainContent.classList.remove("ml-60");
+      mainContent.classList.add("ml-24");
+      sessionStorage.setItem('sidebarState', 'closed');
+      closeAllSubmenusVisualOnly(); // 👈 Fermer visuellement les sous-menus
+    }
+  });
+
+  // Initialisation du graphique des Problemes dans le temps
+  const internetctx = document.getElementById('ProblemesOffreChart').getContext('2d');
+  const ProblemesOffreChart = new Chart(internetctx, {
+    type: 'line',
+    data: {
+      labels:  {{ liste_mois|safe }}, 
+      datasets: [
+        {
+          label: 'Problemes Internet',
+          data: {{ nombre_probleme_1|safe }}, 
+          borderColor: '#FF6384',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Problemes Appel',
+          data: {{ nombre_probleme_2|safe }}, 
+          borderColor: '#36A2EB',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Problemes Service',
+          data: {{ nombre_probleme_3|safe }}, 
+          borderColor: '#FACC15',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Problemes Tarification',
+          data: {{ nombre_probleme_4|safe }}, 
+          borderColor: '#10B981',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Problemes Offre',
+          data: {{ nombre_probleme_5|safe }}, 
+          borderColor: '#FFA726',
+          fill: false,
+          tension: 0.3
+        }
+
+      ]
+    },
+    options: {
+      maintainAspectRatio: false,
+      responsive: true,
+      plugins: {
+            legend: {
+          display: false // Masquer la légende
+        }
+      },
+      scales: {
+        y: {
+          title: {
+            display: true,
+            text: 'Nombre de signalements'
+          },
+          beginAtZero: true
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Mois'
+          }
+        }
+      }
+    }
+  });
+
+// Initialisation du graphique des Problemes par région (barres empilées)
+const regionDataByPeriod = [
+  // Ce mois
+  [
+    {
+      label: 'Problemes Internet',
+      data: {{ probleme1_counts|safe }},
+      backgroundColor: 'rgba(255, 99, 132, 0.6)',
+      borderColor: '#FF6384',
+      borderWidth: 2,
+      borderRadius: 8
+    },
+    {
+      label: 'Problemes Appel',
+      data:  {{ probleme2_counts|safe }},
+      backgroundColor: 'rgba(54, 162, 235, 0.6)',
+      borderColor: '#36A2EB',
+      borderWidth: 2,
+      borderRadius: 8
+    },
+    {
+      label: 'Problemes Service',
+      data:  {{ probleme3_counts|safe }},
+      backgroundColor: 'rgba(250, 204, 21, 0.6)',
+      borderColor: '#FACC15',
+      borderWidth: 2,
+      borderRadius: 4
+    },
+    {
+      label: 'Problemes Tarification',
+      data: {{ probleme4_counts|safe }},
+      backgroundColor: 'rgba(16, 185, 129, 0.6)',
+      borderColor: '#10B981',
+      borderWidth: 2,
+      borderRadius: 4
+    },
+    {
+      label: 'Problemes Offre',
+      data:  {{ probleme5_counts|safe }},
+      backgroundColor: 'rgb(255, 167, 38, 0.6)',
+      borderColor: '#FFA726',
+      borderWidth: 2,
+      borderRadius: 4
+    }
+  ],
+  
+  ];
+
+const regionLabels =  {{ bu_list|safe }};
+let currentPeriodIndex = 0;
+
+const regionBarCtx = document.getElementById('regionBarChart').getContext('2d');
+const regionChart = new Chart(regionBarCtx, {
+  type: 'bar',
+  data: {
+    labels: regionLabels,
+    datasets: regionDataByPeriod[currentPeriodIndex]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false }
+    },
+    scales: {
+      x: { 
+        stacked: true, 
+        title: { display: true, text: 'Region' },
+        ticks: { font: { size: 12 } }
+      },
+      y: { 
+        stacked: true, 
+        beginAtZero: true,
+        title: { display: true, text: 'Nombre de clients' },
+        ticks: { stepSize: 10 } 
+      }
+    }
+  }
+});
+
+document.getElementById('periodfilter').addEventListener('change', function() {
+  const newIndex = parseInt(this.value);
+  if (!isNaN(newIndex) && regionDataByPeriod[newIndex]) {
+    regionChart.data.datasets = regionDataByPeriod[newIndex];
+    regionChart.update();
+  }
+});
+
+    </script>
+</body>
+</html>

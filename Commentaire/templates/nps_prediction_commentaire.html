@@ -1,0 +1,237 @@
+<!-- Début du document HTML principal -->
+<html lang="fr">
+    <head>
+    <!-- Métadonnées et configuration Tailwind CSS -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+  
+     <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        coreSans: ['"Core Sans C"', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+
+ <style>
+    /* Variables CSS pour les couleurs principales */
+    :root {
+                --primary-red: #e53e3e;
+                --dark-gray: #2d3748;
+                --light-gray: #edf2f7;
+                --white: #ffffff;
+            }
+    /* Masquer le texte du menu si la sidebar est réduite */
+    .collapsed .menu-text {
+      display: none;
+    }
+    /* Centrer les icônes du menu si la sidebar est réduite */
+    .collapsed .menu-icon {
+      justify-content: center;
+    }
+    /* Style de la sidebar */
+    .sidebar {
+        background-color: var(--white);
+        border-right: 1px solid #e2e8f0;
+        height: 100vh;
+        position: fixed;
+        width: 280px;
+        transition: all 0.3s;
+        z-index: 10;
+    }
+    /* Sidebar réduite */
+    .sidebar-collapsed {
+        width: 80px;
+    }
+    /* Style des cartes (cards) */
+    .card {
+        background-color: var(--white);
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    /* Séparateur de section */
+    .section-divider {
+        border-top: 1px solid #e2e8f0;
+        margin: 10px 0;
+    }
+    /* Bouton de toggle caché par défaut */
+    .toggle-btn {
+        display: none;
+    }
+    /* Animation de la sidebar */
+     #sidebar {
+      transition: width 0.3s ease,background-color 0.7s, color 0.7s;
+    }
+
+     #darkModeIcon {
+        transition: transform 0.3s ease;
+        }
+    #toggleDarkMode:hover #darkModeIcon {
+        transform: rotate(180deg);
+        }
+    body, .card, header, aside, main {
+    transition: background-color 0.7 ease, color 0.7s ease, border-color 0.4s ease;
+    }
+  </style>
+
+  <!-- Liens vers les polices et styles externes -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Core+Sans+C:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+   <link
+      rel="stylesheet"
+      href="/charts/vanilla/radial-gauge/examples/simple-radial-gauge/ag-example-styles.css"
+    />
+
+    <!-- Titre de la page -->
+    <title>Dashboard Sentiments Clients - Djezzy</title>
+    
+    <!-- Inclusion des librairies de graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-gauge"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ag-charts-enterprise@11.3.0/dist/umd/ag-charts-enterprise.js?t=1747399301504"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-wordcloud@4.0.0/dist/chartjs-chart-wordcloud.min.js"></script>
+    <script src="/charts/vanilla/radial-gauge/examples/simple-radial-gauge/main.js"></script>
+</head>
+<body class="bg-gray-200 text-sm h-max md:min-h-full font-coreSans">
+    <div class="flex h-full bg-gray-50">
+    <!-- Inclusion de la barre latérale -->
+    {% include "sidebarHome.html" %}
+    
+    <main id="mainContent" class="overflow-x-hidden flex-grow transition-all duration-300 max-w-full bg-gray-200 dark:bg-gray-950">
+        <!-- En-tête du dashboard -->
+        {% if user.is_authenticated and user.profile.role == 'bi_agent' or user.profile.role == 'call_center' or user.profile.role == 'customer_care' %}
+        
+        <header class="flex justify-between items-center bg-gray-50 dark:bg-gray-900 px-10 py-4 drop-shadow-sm">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Djezzy_Logo_2015.svg/696px-Djezzy_Logo_2015.svg.png" alt="Logo" class="w-12 h-auto">
+        <p class="text-gray-500 dark:text-gray-300 text-base font-medium"> {% now "l d F Y" %}</p>
+        <p class="text-gray-500 dark:text-gray-300 text-xl font-medium"> {% now " H:i " %}</p>
+        {% include "upper_bar_option.html" %}
+      </header>
+
+        <div class=" p-20">
+            <div class="card p-10 w-full max-w-4xl mx-auto dark:bg-gray-800/70">
+    <h2 class="text-xl font-bold dark:text-gray-100 text-gray-800 mb-4">Tester un commentaire client</h2>
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <textarea name="commentaire" rows="4" cols="50" placeholder="Saisir un commentaire ici..." class="w-full border rounded-md p-3 focus:outline-none dark:bg-gray-800/70 dark:text-gray-100 focus:ring-2 focus:ring-red-500">{{ commentaire|default_if_none:'' }}</textarea>
+        <button type="submit" class="bg-red-500 text-white px-6 py-2 rounded-md hover:bg-red-600 transition">Analyser</button>
+    </form>
+
+    {% if resultat %}
+        <div class="mt-6 bg-gray-50 rounded-md p-4 dark:bg-gray-800/70 border-gray-200 ">
+            <h3 class="text-lg font-semibold dark:text-gray-100 text-gray-700 mb-2">Résultat de l’analyse</h3>
+            <ul class="space-y-1">
+                <li><strong class="dark:text-gray-100">Sentiment :</strong>
+                    {% if resultat.sentiment == "POSITIF" %}
+                        <span class="text-green-600 font-semibold">{{ resultat.sentiment }}</span>
+                    {% elif resultat.sentiment == "NEGATIF" %}
+                        <span class="text-red-600 font-semibold">{{ resultat.sentiment }}</span>
+                    {% else %}
+                        <span class="text-yellow-600 dark:text-yellow-600 font-semibold">{{ resultat.sentiment }}</span>
+                    {% endif %}
+                </li>
+                <li><strong class="dark:text-gray-100">Thème :</strong> <span class="dark:text-gray-100 text-gray-700">{{ resultat.theme }}</span></li>
+                <li><strong class="dark:text-gray-100">Score de confiance :</strong> <span class="dark:text-gray-100 text-gray-700">{{ resultat.score }}</span></li>
+            </ul>
+        </div>
+    {% endif %}
+</div>
+
+
+            
+        </div>
+    {% else %}
+        <div class="flex justify-center items-center h-96">
+            <p class="text-red-500 text-xl">Vous n'avez pas accès à ce contenu.</p>
+        </div>
+    {% endif %}
+    </div>
+
+<script>
+  // Gestion de l'état de la sidebar (ouverte/fermée) avec sessionStorage
+  const sidebar = document.getElementById('sidebar');
+  const toggleSidebar = document.getElementById('toggleSidebar');
+  const mainContent = document.getElementById('mainContent');
+  const submenuIds = ['problemsSubmenu', 'ameliorationSubmenu'];
+  const sidebarState = sessionStorage.getItem('sidebarState');
+
+  function restoreSubmenus() {
+    submenuIds.forEach(id => {
+      const submenu = document.getElementById(id);
+      if (!submenu) return;
+      const open = localStorage.getItem(id) === 'open';
+      if (open) {
+        submenu.classList.remove('hidden');
+        submenu.style.maxHeight = submenu.scrollHeight + 'px';
+      } else {
+        submenu.classList.add('hidden');
+        submenu.style.maxHeight = '0';
+      }
+    });
+  }
+
+  function closeAllSubmenusVisualOnly() {
+    submenuIds.forEach(id => {
+      const submenu = document.getElementById(id);
+      if (!submenu || submenu.classList.contains('hidden')) return;
+      submenu.style.maxHeight = '0';
+      submenu.addEventListener('transitionend', () => submenu.classList.add('hidden'), { once: true });
+      // NE PAS modifier localStorage ici
+    });
+  }
+
+  // Appliquer l'état initial de la sidebar
+  if (sidebarState === 'open') {
+    sidebar.classList.add('w-60');
+    sidebar.classList.remove('collapsed');
+    mainContent.classList.add("ml-60");
+    mainContent.classList.remove("ml-24");
+    restoreSubmenus();
+  } else {
+    sidebar.classList.remove('w-60');
+    sidebar.classList.add('w-24');
+    mainContent.classList.remove("ml-60");
+    mainContent.classList.add("ml-24");
+    sidebar.classList.add('collapsed');
+    closeAllSubmenusVisualOnly();
+  }
+
+  // Bouton toggle de la sidebar
+   toggleSidebar.addEventListener('click', () => {
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    if (isCollapsed) {
+      sidebar.classList.remove('collapsed');
+      sidebar.classList.remove('w-24');
+      sidebar.classList.add('w-60');
+      mainContent.classList.add("ml-60");
+      mainContent.classList.remove("ml-24");
+      sessionStorage.setItem('sidebarState', 'open');
+      restoreSubmenus(); // 👈 Restaurer les sous-menus si besoin
+    } else {
+      sidebar.classList.add('collapsed');
+      sidebar.classList.add('w-24');
+      sidebar.classList.remove('w-60');
+      mainContent.classList.remove("ml-60");
+      mainContent.classList.add("ml-24");
+      sessionStorage.setItem('sidebarState', 'closed');
+      closeAllSubmenusVisualOnly(); // 👈 Fermer visuellement les sous-menus
+    }
+  });
+      
+      
+</script>
+
+</body>
+</html>

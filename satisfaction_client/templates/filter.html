@@ -1,0 +1,23 @@
+ <form method="get" class="flex gap-4 items-center">
+        <!-- Sélecteur de période -->
+        <select name="mois"
+            class="border rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-gray-900 dark:text-gray-100"
+            onchange="this.form.submit()">
+            <option value="">Toute l'année</option>
+            <option value="1" {% if request.GET.mois == '1' %}selected{% endif %}>Janvier - Juin</option>
+            <option value="2" {% if request.GET.mois == '2' %}selected{% endif %}>Juillet - Décembre</option>
+        </select>
+        <!-- Sélecteur d’année -->
+            <select name="annee"
+                class="border rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-gray-900 dark:text-gray-100"
+                onchange="this.form.submit()">
+            
+            {% for annee in annees %}
+                <option value="{{ annee }}" {% if annee_selectionnee == annee|stringformat:"s" %}selected{% endif %}>
+                    {{ annee }}
+                </option>
+            {% endfor %}
+        </select>
+
+
+    </form>

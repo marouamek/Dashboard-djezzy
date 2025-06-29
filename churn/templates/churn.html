@@ -1,0 +1,749 @@
+<html lang="fr">
+    <head>
+    <!-- Définition de l'encodage et du viewport pour le responsive -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Importation de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+  
+      <script>
+          tailwind.config = {
+            darkMode: 'class',
+            theme: {
+              extend: {
+                fontFamily: {
+                  coreSans: ['"Core Sans C"', 'sans-serif'],
+                },
+              },
+            },
+          };
+        </script>
+
+        <!-- Styles personnalisés pour la mise en page et les composants -->
+        <style>
+          /* Variables CSS pour les couleurs principales */
+          :root {
+            --primary-red: #e53e3e;
+            --dark-gray: #2d3748;
+            --light-gray: #edf2f7;
+            --white: #ffffff;
+          }
+          /* Masquer le texte du menu si la sidebar est réduite */
+          .collapsed .menu-text {
+            display: none;
+          }
+          /* Centrer les icônes du menu si la sidebar est réduite */
+          .collapsed .menu-icon {
+            justify-content: center;
+          }
+          /* Style de la sidebar */
+          .sidebar {
+              background-color: var(--white);
+              border-right: 1px solid #e2e8f0;
+              height: 100vh;
+              position: fixed;
+              width: 280px;
+              transition: all 0.3s;
+              z-index: 10;
+          }
+          /* Sidebar réduite */
+          .sidebar-collapsed {
+              width: 80px;
+          }
+          /* Style des cartes (cards) */
+          .card {
+              background-color: var(--white);
+              border-radius: 8px;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+              transition: transform 0.2s;
+          }
+          .card:hover {
+              transform: translateY(-5px);
+          }
+          /* Séparateur de section */
+          .section-divider {
+              border-top: 1px solid #e2e8f0;
+              margin: 10px 0;
+          }
+          /* Bouton de toggle caché par défaut */
+          .toggle-btn {
+              display: none;
+          }
+          /* Animation de la sidebar */
+          #sidebar {
+            transition: width 0.3s ease,background-color 0.7s, color 0.7s;
+          }
+
+          #darkModeIcon {
+              transition: transform 0.3s ease;
+              }
+          #toggleDarkMode:hover #darkModeIcon {
+              transform: rotate(180deg);
+              }
+          body, .card, header, aside, main {
+          transition: background-color 0.7 ease, color 0.7s ease, border-color 0.4s ease;
+          }
+        </style>
+
+  <!-- Importation des polices et icônes Google -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Core+Sans+C:wght@400;700&display=swap" rel="stylesheet">
+  
+
+    <title>Dashboard Satisfaction Client - Djezzy</title>
+    
+    <!-- Importation de Chart.js pour les graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+<body class="bg-gray-200 dark:bg-gray-950 text-sm h-max md:min-h-full font-coreSans transition-all duration-300">
+    <div class="flex h-full bg-gray-50 dark:bg-gray-900 transition-colors duration-500 ease-in-out">
+        {% include "sidebarHome.html" %}
+        <main id="mainContent" class="overflow-x-hidden flex-grow transition-all duration-300 max-w-full bg-gray-200 dark:bg-gray-950">
+            {% if user.is_authenticated and user.profile.role == 'bi_agent' or user.profile.role == 'call_center' or user.profile.role == 'customer_care' %}
+            <header class="flex justify-between items-center bg-gray-50 dark:bg-gray-900 px-10 py-4 drop-shadow-sm transition-all duration-300">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Djezzy_Logo_2015.svg/696px-Djezzy_Logo_2015.svg.png" alt="Logo" class="w-12 h-auto">
+                <p class="text-gray-500 dark:text-gray-300 text-base font-medium"> {% now "l d F Y" %}</p>
+                <p class="text-gray-500 dark:text-gray-300 text-xl font-medium"> {% now " H:i " %}</p>
+                {% include "upper_bar_option.html" %}
+            </header>
+          <div class="p-10">
+                <div class="flex justify-between items-center mb-8">
+                    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Analyse du churn et client à risque</h1>
+                </div>
+                <div class="grid card bg-white/50 dark:bg-gray-800/70 p-4 flex grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 transition-all duration-300">
+                    <div class="card p-6 space-y-8 justify-between dark:bg-gray-800 transition-all duration-300">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="space-y-4">
+                                <p class="text-gray-500 dark:text-gray-300 text-sm">Taux de client Détracteurs</p>
+                                <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100">{{ is_detracteur }}</h2>
+                            </div>
+                            <div class="bg-rose-100 dark:bg-rose-900 p-3 rounded-full">
+                                <span class="material-icons-round text-rose-500">trending_down</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card space-y-8 p-6 dark:bg-gray-800 transition-all duration-300">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="space-y-4">
+                                <p class="text-gray-500 dark:text-gray-300 text-sm">Taux de client Insatisfait</p>
+                                <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100">{{ non_satisfait }}</h2>
+                            </div>
+                            <div class="bg-red-100 dark:bg-red-900 p-3 rounded-full">
+                                <span class="text-red-500 material-icons-round">sentiment_dissatisfied</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card p-6 dark:bg-gray-800 transition-all duration-300">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="space-y-4">
+                                <p class="text-gray-500 dark:text-gray-300 text-sm">Taux de client Terminé</p>
+                                <h2 class="text-4xl font-bold text-gray-800 dark:text-gray-100">{{ clients_termines }}</h2>
+                            </div>
+                            <div class="bg-rose-100 dark:bg-rose-900 p-3 rounded-full">
+                                <span class="text-rose-500 material-icons-round">person_remove</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center my-6 mb-8">
+                    <h2 class="text-gray-500 dark:text-gray-300 font-semibold text-base mr-4 whitespace-nowrap">
+                        Statistiques des profils à risque
+                    </h2>
+                    <div class="flex-grow border-t-4 border-gray-300 dark:border-gray-700"></div>
+                </div>
+                <div class="grid card bg-white/50 dark:bg-gray-800/70 p-4 flex grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6 mb-8 transition-all duration-300">
+                    <div class="card p-6 dark:bg-gray-800 transition-all duration-300">
+                        <div class="items-start mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Évolution des Profils à Risque</h3>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Analyse des clients avec le profil (détracteur et insatisfait avec un temps d'Ancienneté  &lt;= 3 ans) </span>
+                        </div>
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center">
+                                <div class="flex items-center mr-4">
+                                    <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600 dark:text-gray-300">Taux de risque</span>
+                                </div>
+                            </div>
+                            <form method="get" class="flex items-center space-x-4 mb-4">
+                                <!-- Plage mensuelle -->
+                                <div>
+                                    <label for="mois-range-select" class="block text-sm text-gray-700">Plage mensuelle :</label>
+                                    <select name="mois_range" id="mois-range-select"
+                                            class="border rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                                            onchange="this.form.submit()">
+                                        <option value="">Toute l'année</option>
+                                        <option value="1" {% if request.GET.mois_range == '1' %}selected{% endif %}>Janvier - Juin</option>
+                                        <option value="2" {% if request.GET.mois_range == '2' %}selected{% endif %}>Juillet - Décembre</option>
+                                    </select>
+                                </div>
+
+                                <!-- Année -->
+                               <div>
+                                  <label for="annee-churn-select" class="block text-sm text-gray-700">Année :</label>
+                                  <select name="annee" id="annee-churn-select"
+                                          class="border rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                                          onchange="this.form.submit()">
+                                      <option value="">Choisir l'année</option>
+                                      {% for annee in annees %}
+                                          <option value="{{ annee }}"
+                                              {% if request.GET.annee %}
+                                                  {% if request.GET.annee == annee|stringformat:"s" %}selected{% endif %}
+                                              {% else %}
+                                                  {% if forloop.first %}selected{% endif %}
+                                              {% endif %}
+                                          >
+                                              {{ annee }}
+                                          </option>
+                                      {% endfor %}
+                                  </select>
+                              </div>
+
+
+                                <!-- Champs cachés pour préserver les autres filtres -->
+                                 <!-- Sauvegarde des autres filtres -->
+                            <input type="hidden" name="periode" value="{{ request.GET.periode|default_if_none:'' }}">
+                            <input type="hidden" name="trimestre" value="{{ request.GET.trimestre|default_if_none:'' }}">
+                            <input type="hidden" name="trimestre_top" value="{{ request.GET.trimestre_top|default_if_none:'' }}">
+                            </form>
+
+                        </div>
+                        <div class="h-64">
+                            <canvas id="churnChart" width="272" height="237" style="display: block; box-sizing: border-box; height: 256px; width: 294px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid card bg-white/50 dark:bg-gray-800/70 p-4 flex grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8 transition-all duration-300">
+                    <div class="card p-6 bg-white dark:bg-gray-800 shadow rounded-lg transition-all duration-300">
+                        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Répartition des profils à risque par tranche d'age</h2>
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center">
+                                <div class="flex items-center mr-4">
+                                    <div class="w-3 h-3 bg-rose-500 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600 dark:text-gray-300">Client à risque de terminaison</span>
+                                </div>
+                            </div>
+                        </div>
+                        <canvas id="stackedBarChartrisque"></canvas>
+                    </div>
+                    <div class="card p-6 bg-white dark:bg-gray-800 shadow rounded-lg transition-all duration-300">
+                        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Répartition des profils à risque par Type client</h2>
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center">
+                                <div class="flex items-center mr-4">
+                                    <div class="w-3 h-3 bg-rose-500 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600 dark:text-gray-300">Client à risque de terminaison</span>
+                                </div>
+                            </div>
+                        </div>
+                        <canvas id="stackedBarCharttyperisque"></canvas>
+                    </div>
+                    <div class="card p-6 bg-white dark:bg-gray-800 shadow rounded-lg transition-all duration-300">
+                        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Répartition des profils à risque par Type de souscription</h2>
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center">
+                                <div class="flex items-center mr-4">
+                                    <div class="w-3 h-3 bg-rose-500 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600 dark:text-gray-300">Client à risque de terminaison</span>
+                                </div>
+                            </div>
+                        </div>
+                        <canvas id="souscriptionChartrisque"></canvas>
+                    </div>
+                    <div class="card p-6 bg-white dark:bg-gray-800 shadow rounded-lg transition-all duration-300">
+                        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Répartition des profils risque par Région</h2>
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center">
+                                <div class="flex items-center mr-4">
+                                    <div class="w-3 h-3 bg-rose-500 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600 dark:text-gray-300">Client à risque de terminaison</span>
+                                </div>
+                            </div>
+                        </div>
+                        <canvas id="ancienneteChartrisque" class="w-full h-auto"></canvas>
+                    </div>
+                </div>
+                <div class="flex items-center my-6 mb-8">
+                    <h2 class="text-gray-500 dark:text-gray-300 font-semibold text-base mr-4 whitespace-nowrap">
+                        Statistiques des profils actifs et terminés
+                    </h2>
+                    <div class="flex-grow border-t-4 border-gray-300 dark:border-gray-700"></div>
+                </div>
+                <!-- ...slider code... -->
+                <div class="card bg-white/50 dark:bg-gray-800/70 p-4 mb-8 transition-all duration-300">
+                    <div id="chart-slider" class="relative overflow-hidden">
+                        <div id="slider-grid">
+                            <div class="slider-slide grid grid-cols-1 md:grid-cols-2 gap-6 transition-transform duration-500" data-slide="0">
+                                <div class="card p-6 bg-white dark:bg-gray-800 shadow rounded-lg transition-all duration-300">
+                                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Répartition des clients par tranche d'age</h2>
+                                    <canvas id="stackedBarChart"></canvas>
+                                </div>
+                                <div class="card p-6 bg-white dark:bg-gray-800 shadow rounded-lg transition-all duration-300">
+                                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Répartition des client par Type</h2>
+                                    <canvas id="stackedBarCharttype"></canvas>
+                                </div>
+                            </div>
+                            <div class="slider-slide grid grid-cols-1 md:grid-cols-2 gap-6 transition-transform duration-500 hidden" data-slide="1">
+                                <div class="card p-6 bg-white dark:bg-gray-800 shadow rounded-lg transition-all duration-300">
+                                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Répartition des clients par Type de souscription</h2>
+                                    <canvas id="souscriptionChart"></canvas>
+                                </div>
+                                <div class="card p-6 bg-white dark:bg-gray-800 shadow rounded-lg transition-all duration-300">
+                                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Répartition des Clients par Tranche d'Ancienneté</h2>
+                                    <canvas id="ancienneteChart" class="w-full h-auto"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-center mt-4 space-x-2">
+                            <button class="card p-6 bg-white dark:bg-gray-800 shadow rounded-lg text-emerald-500 font-semibold px-2 py-2 transition-all duration-300" id="prev-slide">
+                                <span class="material-icons-round">arrow_back_ios</span>
+                            </button>
+                            <button class="card p-6 bg-white dark:bg-gray-800 shadow rounded-lg text-emerald-500 font-semibold px-2 py-2 transition-all duration-300" id="next-slide">
+                                <span class="material-icons-round">arrow_forward_ios</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+         
+         
+
+            
+         {% else %}
+        <div class="flex justify-center items-center h-96">
+            <p class="text-red-500 text-xl">Vous n'avez pas accès à ce contenu.</p>
+        </div>
+      {% endif %}
+    </main>
+
+<script>
+
+let currentSlide = 0;
+const slides = document.querySelectorAll('#slider-grid .slider-slide');
+
+function animateSlides(nextSlide, direction) {
+  slides.forEach((slide, idx) => {
+    if (idx === currentSlide) {
+      // Slide out
+      slide.classList.remove('translate-x-0');
+      slide.classList.add(direction === 'left' ? '-translate-x-full' : 'translate-x-full');
+      setTimeout(() => {
+        slide.classList.add('hidden');
+      }, 500);
+    }
+    if (idx === nextSlide) {
+      // Prepare to slide in
+      slide.classList.remove('hidden', 'translate-x-full', '-translate-x-full');
+      slide.classList.add(direction === 'left' ? 'translate-x-full' : '-translate-x-full');
+      setTimeout(() => {
+        slide.classList.remove('translate-x-full', '-translate-x-full');
+        slide.classList.add('translate-x-0');
+      }, 10);
+    }
+  });
+  currentSlide = nextSlide;
+}
+
+document.getElementById('prev-slide').onclick = () => {
+  const next = currentSlide === 0 ? 1 : 0;
+  animateSlides(next, 'left');
+};
+document.getElementById('next-slide').onclick = () => {
+  const next = currentSlide === 1 ? 0 : 1;
+  animateSlides(next, 'right');
+};
+
+// Initialize
+slides.forEach((slide, idx) => {
+  slide.classList.add('transition-transform', 'duration-500');
+  if (idx === 0) {
+    slide.classList.add('translate-x-0');
+    slide.classList.remove('hidden');
+  } else {
+    slide.classList.add('translate-x-full', 'hidden');
+  }
+});
+
+
+ const sidebar = document.getElementById('sidebar');
+  const toggleSidebar = document.getElementById('toggleSidebar');
+  const mainContent = document.getElementById('mainContent');
+  const submenuIds = ['problemsSubmenu', 'ameliorationSubmenu'];
+  const sidebarState = sessionStorage.getItem('sidebarState');
+
+  function restoreSubmenus() {
+    submenuIds.forEach(id => {
+      const submenu = document.getElementById(id);
+      if (!submenu) return;
+      const open = localStorage.getItem(id) === 'open';
+      if (open) {
+        submenu.classList.remove('hidden');
+        submenu.style.maxHeight = submenu.scrollHeight + 'px';
+      } else {
+        submenu.classList.add('hidden');
+        submenu.style.maxHeight = '0';
+      }
+    });
+  }
+
+  function closeAllSubmenusVisualOnly() {
+    submenuIds.forEach(id => {
+      const submenu = document.getElementById(id);
+      if (!submenu || submenu.classList.contains('hidden')) return;
+      submenu.style.maxHeight = '0';
+      submenu.addEventListener('transitionend', () => submenu.classList.add('hidden'), { once: true });
+      // NE PAS modifier localStorage ici
+    });
+  }
+
+  // Appliquer l'état initial de la sidebar
+  if (sidebarState === 'open') {
+    sidebar.classList.add('w-60');
+    sidebar.classList.remove('collapsed');
+    mainContent.classList.add("ml-60");
+    mainContent.classList.remove("ml-24");
+    restoreSubmenus();
+  } else {
+    sidebar.classList.remove('w-60');
+    sidebar.classList.add('w-24');
+    mainContent.classList.remove("ml-60");
+    mainContent.classList.add("ml-24");
+    sidebar.classList.add('collapsed');
+    closeAllSubmenusVisualOnly();
+  }
+
+  // Bouton toggle de la sidebar
+  toggleSidebar.addEventListener('click', () => {
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    if (isCollapsed) {
+      sidebar.classList.remove('collapsed');
+      sidebar.classList.remove('w-24');
+      sidebar.classList.add('w-60');
+      mainContent.classList.add("ml-60");
+      mainContent.classList.remove("ml-24");
+      sessionStorage.setItem('sidebarState', 'open');
+      restoreSubmenus(); // 👈 Restaurer les sous-menus si besoin
+    } else {
+      sidebar.classList.add('collapsed');
+      sidebar.classList.add('w-24');
+      sidebar.classList.remove('w-60');
+      mainContent.classList.remove("ml-60");
+      mainContent.classList.add("ml-24");
+      sessionStorage.setItem('sidebarState', 'closed');
+      closeAllSubmenusVisualOnly(); // 👈 Fermer visuellement les sous-menus
+    }
+  });
+ 
+
+
+  // 1. Graphique d'évolution du churn (ligne) - churnChart
+  const churnData = {{ churn_data_json|safe }};
+  const churnLabels = churnData.map(item => item.mois);
+  const churnCounts = churnData.map(item => item.count);
+  const churnCtx = document.getElementById('churnChart').getContext('2d');
+  const churnChart = new Chart(churnCtx, {
+      type: 'line',
+      data: {
+          labels: churnLabels,
+          datasets: [{
+              label: 'Taux de Churn (%)',
+              data: churnCounts,
+              borderColor: '#EF4444',
+              backgroundColor: 'rgba(244, 63, 94, 0.1)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.4
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+              y: {
+                  beginAtZero: true,
+                  ticks: {
+                      callback: function(value) {
+                          return value;
+                      }
+                  }
+              }
+          },
+          plugins: {
+              legend: {
+                  display: false
+              }
+          }
+      }
+  });
+
+  // 2. Répartition des profils à risque par tranche d'age - stackedBarChartrisque
+  const configrisque = {
+    type: 'bar',
+    data: {
+      labels: {{ labels_age|safe }}, 
+      datasets: [
+      
+        {
+          label: 'Clients Terminés',
+          data:  {{ data_age|safe }}, 
+          backgroundColor: 'rgba(244, 63, 94, 0.5)',
+          borderColor: '#F43F5E',
+          borderWidth: 2,
+          borderRadius: 6
+        }
+      ]
+    },
+    options: {
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { stacked: true, title: { display: true, text: 'Tranche ancienneté' } },
+        y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Nombre de clients' } }
+      }
+    }
+  };
+  new Chart(document.getElementById('stackedBarChartrisque'), configrisque);
+
+  // 3. Répartition des profils à risque par Type - stackedBarCharttyperisque
+  const configtyperisque = {
+    type: 'bar',
+    data: {
+      labels:  {{ labels_type_client|safe }},
+      datasets: [
+        
+        {
+          label: 'Clients Terminés',
+          data:  {{ data_type_client|safe }}, 
+          backgroundColor: 'rgba(244, 63, 94, 0.5)',
+          borderColor: '#F43F5E',
+          borderWidth: 2,
+          borderRadius: 6
+        }
+      ]
+    },
+    options: {
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { stacked: true, title: { display: true, text: 'Tranche ancienneté' } },
+        y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Nombre de clients' } }
+      }
+    }
+  };
+  new Chart(document.getElementById('stackedBarCharttyperisque'), configtyperisque);
+
+  // 4. Répartition des profils à risque par Type de souscription - souscriptionChartrisque
+  const Souscriptiontyperisque = {
+    type: 'bar',
+    data: {
+      labels: {{ labels_offre|safe }},
+      datasets: [
+       
+        {
+          label: 'Clients Terminés',
+          data:{{ data_offre|safe }},
+          backgroundColor: 'rgba(244, 63, 94, 0.5)',
+          borderColor: '#F43F5E',
+          borderWidth: 2,
+          borderRadius: 6
+        }
+      ]
+    },
+    options: {
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { stacked: true, title: { display: true, text: 'Tranche ancienneté' } },
+        y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Nombre de clients' } }
+      }
+    }
+  };
+  new Chart(document.getElementById('souscriptionChartrisque'), Souscriptiontyperisque);
+
+  // 5. Répartition des profils risque à par Tranche d'Ancienneté - ancienneteChartrisque
+  const ancienneteChartrisque = new Chart(document.getElementById('ancienneteChartrisque'), {
+    type: 'bar',
+    data: {
+      labels:{{ labels_bu|safe }},
+      datasets: [
+      {
+        label: 'Clients terminés',
+        data: {{ data_bu|safe }},
+        backgroundColor: 'rgba(244, 63, 94, 0.5)',
+        borderColor: '#F43F5E',
+        borderWidth: 2,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { stacked: true, title: { display: true, text: 'Tranche ancienneté' } },
+        y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Nombre de clients' } }
+      }
+    }
+  });
+
+  // 6. Répartition des clients par tranche d'age - stackedBarChart
+  const config = {
+    type: 'bar',
+    data: {
+      labels: {{ labels_age_status|safe }},
+      datasets: [
+        {
+          label: 'Clients Actifs',
+          data: {{ data_act|safe }},
+          backgroundColor: 'rgba(16, 185, 129, 0.5)',
+          borderColor: '#10B981',
+          borderWidth: 2,
+          borderRadius: 6
+        },
+        {
+          label: 'Clients Terminés',
+          data: {{ data_ter|safe }},
+          backgroundColor: 'rgba(244, 63, 94, 0.5)',
+          borderColor: '#F43F5E',
+          borderWidth: 2,
+          borderRadius: 6
+        }
+      ]
+    },
+    options: {
+        animation: {
+      duration: 0 // 👈 disables animation completely
+    },
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { stacked: true, title: { display: true, text: 'Tranche ancienneté' } },
+        y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Nombre de clients' } }
+      }
+    }
+  };
+  new Chart(document.getElementById('stackedBarChart'), config);
+
+  // 7. Répartition des client par Type - stackedBarCharttype
+  const configtype = {
+    type: 'bar',
+    data: {
+      labels: {{ labels_type_abonne|safe }},
+      datasets: [
+        {
+          label: 'Clients Actifs',
+          data:   {{ data_act_type|safe }},
+          backgroundColor: 'rgba(16, 185, 129, 0.5)',
+          borderColor: '#10B981',
+          borderWidth: 2,
+          borderRadius: 6
+        },
+        {
+          label: 'Clients Terminés',
+          data: {{ data_ter_type|safe }},
+          backgroundColor: 'rgba(244, 63, 94, 0.5)',
+          borderColor: '#F43F5E',
+          borderWidth: 2,
+          borderRadius: 6
+        }
+      ]
+    },
+    options: {
+        animation: {
+      duration: 0 // 👈 disables animation completely
+    },
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { stacked: true, title: { display: true, text: 'Tranche ancienneté' } },
+        y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Nombre de clients' } }
+      }
+    }
+  };
+  new Chart(document.getElementById('stackedBarCharttype'), configtype);
+
+  // 8. Répartition des clients par Type de souscription - souscriptionChart
+  const Souscriptiontype = {
+    type: 'bar',
+    data: {
+      labels: {{ labels2|safe }}, 
+      datasets: [
+        {
+          label: 'Clients Actifs',
+          data: {{ data_act2|safe }},
+          backgroundColor: 'rgba(16, 185, 129, 0.5)',
+          borderColor: '#10B981',
+          borderWidth: 2,
+          borderRadius: 6
+        },
+        {
+          label: 'Clients Terminés',
+          data:  {{ data_ter2|safe }},
+          backgroundColor: 'rgba(244, 63, 94, 0.5)',
+          borderColor: '#F43F5E',
+          borderWidth: 2,
+          borderRadius: 6
+        }
+      ]
+    },
+    options: {
+        animation: {
+      duration: 0 // 👈 disables animation completely
+    },
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { stacked: true, title: { display: true, text: 'Tranche ancienneté' } },
+        y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Nombre de clients' } }
+      }
+    }
+  };
+  new Chart(document.getElementById('souscriptionChart'), Souscriptiontype);
+
+  // 9. Répartition des Clients par Tranche d'Ancienneté - ancienneteChart
+  const ancienneteChart = new Chart(document.getElementById('ancienneteChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ labels_age_client|safe }},
+      datasets: [{
+        label: 'Clients actifs',
+        data:  {{ data_act_age_client|safe }},
+        backgroundColor: 'rgba(16, 185, 129, 0.5)',
+        borderColor: '#10B981',
+        borderWidth: 2,
+        borderRadius: 6
+      },
+      {
+        label: 'Clients terminés',
+        data: {{ data_ter_age_client|safe }},
+        backgroundColor: 'rgba(244, 63, 94, 0.5)',
+        borderColor: '#F43F5E',
+        borderWidth: 2,
+        borderRadius: 6
+      }]
+    },
+    options: {
+        animation: {
+      duration: 0 // 👈 disables animation completely
+    },
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { stacked: true, title: { display: true, text: 'Tranche ancienneté' } },
+        y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Nombre de clients' } }
+      }
+    }
+  });
+
+</script>
+
+</body>
+</html>

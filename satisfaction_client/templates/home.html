@@ -1,0 +1,685 @@
+<html lang="fr">
+    <head>
+    <!-- Définition de l'encodage et du viewport pour le responsive -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Importation de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+  
+    <script>
+        // Configuration personnalisée de Tailwind pour la police Core Sans C
+        tailwind.config = {
+        theme: {
+            extend: {
+            fontFamily: {
+                coreSans: ['"Core Sans C"', 'sans-serif'],
+            },
+            },
+        },
+        };
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                fontFamily: {
+                    coreSans: ['"Core Sans C"', 'sans-serif'],
+                },
+                },
+            },
+            };
+  </script>
+
+  <style>
+    /* Variables CSS pour les couleurs principales */
+    :root {
+                --primary-red: #e53e3e;
+                --dark-gray: #2d3748;
+                --light-gray: #edf2f7;
+                --white: #ffffff;
+            }
+    /* Masquer le texte du menu si la sidebar est réduite */
+    .collapsed .menu-text {
+      display: none;
+    }
+    /* Centrer les icônes du menu si la sidebar est réduite */
+    .collapsed .menu-icon {
+      justify-content: center;
+    }
+    /* Style de la sidebar */
+    .sidebar {
+        background-color: var(--white);
+        border-right: 1px solid #e2e8f0;
+        height: 100vh;
+        position: fixed;
+        width: 280px;
+        transition: all 0.3s;
+        z-index: 10;
+    }
+    /* Sidebar réduite */
+    .sidebar-collapsed {
+        width: 80px;
+    }
+    /* Style des cartes (cards) */
+    .card {
+        background-color: var(--white);
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    /* Séparateur de section */
+    .section-divider {
+        border-top: 1px solid #e2e8f0;
+        margin: 10px 0;
+    }
+    /* Bouton de toggle caché par défaut */
+    .toggle-btn {
+        display: none;
+    }
+    /* Animation de la sidebar */
+     #sidebar {
+      transition: width 0.3s ease,background-color 0.7s, color 0.7s;
+    }
+
+     #darkModeIcon {
+        transition: transform 0.3s ease;
+        }
+    #toggleDarkMode:hover #darkModeIcon {
+        transform: rotate(180deg);
+        }
+    body, .card, header, aside, main {
+    transition: background-color 0.7 ease, color 0.7s ease, border-color 0.4s ease;
+    }
+  </style>
+
+  <!-- Importation des polices et icônes Google -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Core+Sans+C:wght@400;700&display=swap" rel="stylesheet">
+<script src='https://cdn.plot.ly/plotly-3.0.1.min.js'></script>
+
+    <title>Dashboard Satisfaction Client - Djezzy</title>
+    
+    <!-- Importation de Chart.js pour les graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+<body class="bg-gray-200 dark:bg-gray-950 text-sm h-max md:min-h-full font-coreSans">
+    <div class="flex h-full bg-gray-50 dark:bg-gray-900">
+    <!-- Inclusion de la sidebar -->
+    {% include "sidebarHome.html" %}
+    
+    <main id="mainContent" class="overflow-x-hidden flex-grow transition-all duration-300 max-w-full bg-gray-200 dark:bg-gray-950">
+        {% if user.is_authenticated and user.profile.role == 'bi_agent' or user.profile.role == 'call_center' or user.profile.role == 'customer_care' %}
+        
+        <!-- En-tête du dashboard avec logo, date, heure et options -->
+        <header class="flex justify-between items-center bg-gray-50 dark:bg-gray-900 px-10 py-4 drop-shadow-sm">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Djezzy_Logo_2015.svg/696px-Djezzy_Logo_2015.svg.png" alt="Logo" class="w-12 h-auto">
+            <p class="text-gray-500 dark:text-gray-300 text-base font-medium"> {% now "l d F Y" %}</p>
+            <p class="text-gray-500 dark:text-gray-300 text-xl font-medium"> {% now " H:i " %}</p>
+            {% include "upper_bar_option.html" %}
+        </header>
+        <div class="p-10">
+
+            <!-- Titre principal du dashboard -->
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Tableau de bord</h1>
+                    <p class="text-gray-600 dark:text-gray-300">Vue d'ensemble de la satisfaction client</p>
+                </div>
+                 {% include "filter.html" %}
+            </div>
+
+            <!-- Cartes principales des KPIs : NPS, CSAT, Churn, Tickets ouverts -->
+            <div class="card bg-white/50 dark:bg-gray-800/70 p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Carte NPS -->
+                <div class="card p-6 space-y-8 justify-between dark:bg-gray-800">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="space-y-4">
+                            <p class="text-gray-500 dark:text-gray-300 text-sm">NPS Score</p>
+                            <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100">{{ nps_score }}</h2>
+                        </div>
+                        <div class="bg-yellow-100 dark:bg-yellow-900 p-3 rounded-full">
+                           <span class="material-icons-round text-orange-500">speed</span>
+                        </div>
+                    </div>
+                    <div>
+                        <!-- Barre de progression NPS -->
+                        <div class="relative w-full h-3 rounded-full bg-gradient-to-r from-rose-500 via-yellow-400 to-emerald-500">
+                        <div id="nps-point"
+                            class="absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-white border-4 border-yellow-400 rounded-full shadow-md transition-all duration-300">
+                        </div>
+                        </div>
+                        <!-- Graduation de la barre -->
+                        <div class="flex justify-between mt-2 text-xs text-gray-200">
+                        <span class="font-bold text-gray-400">|</span><span>|</span><span>|</span><span>|</span><span >|</span>
+                        <span class="font-bold text-gray-400">|</span><span>|</span><span>|</span><span>|</span><span>|</span><span class="font-bold text-gray-400">|</span>
+                        </div>
+                        <div class="flex justify-between mt-2 text-xs text-gray-400">
+                        <span>-100</span><span></span><span></span><span></span><span></span>
+                        <span>0</span><span></span><span></span><span></span><span></span><span>+100</span>
+                        </div>
+                    </div>
+                </div>
+              <!-- Carte CSAT -->
+                <div class="card space-y-8 p-6 dark:bg-gray-800">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="space-y-4">
+                            <p class="text-gray-500 dark:text-gray-300 text-sm">CSAT Score</p>
+                            <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100">{{ csat_score }}</h2>
+                        </div>
+                        <div class="bg-blue-100 dark:bg-blue-900 p-3 rounded-full">
+                           <span class="text-blue-500 material-icons-round">sentiment_satisfied</span>
+                        </div>
+                    </div>
+                    <div>
+                        <!-- Barre de progression CSAT -->
+                        <div class="relative w-full h-3 rounded-full bg-gradient-to-r from-rose-500 via-yellow-400 to-emerald-500">
+                        <div id="csat-point"
+                            class="absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-white border-4 border-yellow-400 rounded-full shadow-md transition-all duration-300">
+                        </div>
+                        </div>
+                        <!-- Graduation de la barre -->
+                        <div class="flex justify-between mt-2 text-xs text-gray-200">
+                        <span>|</span><span>|</span><span>|</span><span>|</span><span>|</span>
+                        <span>|</span><span>|</span><span>|</span><span>|</span><span>|</span><span>|</span>
+                        </div>
+                        <div class="flex justify-between mt-2 text-xs text-gray-400">
+                        <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span>
+                        <span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Carte Taux de Churn -->
+                <div class="card p-6 space-y-8 justify-between dark:bg-gray-800">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="space-y-4">
+                            <p class="text-gray-500 dark:text-gray-300 text-sm">Taux de Churn</p>
+                            <h2 class="text-4xl font-bold text-gray-800 dark:text-gray-100">{{ churn_rate }}%</h2>
+                        </div>
+                        <div class="bg-rose-100 dark:bg-rose-900 p-3 rounded-full">
+                         <span class="text-rose-500 material-icons-round">person_remove</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full relative overflow-hidden">
+                            <div class="h-3 bg-rose-500 rounded-full transition-all duration-500"
+                                style="width: {{ churn_rate|default:0 }}%;"></div>
+                        </div>
+                        <div class="flex justify-between mt-2 text-xs text-gray-200 dark:text-gray-700">
+                        <span class="font-bold text-gray-400 dark:text-gray-500">|</span><span>|</span><span>|</span><span>|</span><span>|</span>
+                        <span class="font-bold text-gray-400 dark:text-gray-500">|</span><span>|</span><span>|</span><span>|</span><span>|</span><span class="font-bold text-gray-400 dark:text-gray-500">|</span>
+                        </div>
+                        <div class="flex justify-between mt-2 text-xs text-gray-400 dark:text-gray-300">
+                        <span>0%</span><span></span><span></span><span></span><span></span>
+                        <span></span><span></span><span></span><span></span><span></span><span>100%</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Carte Tickets Ouverts -->
+                <div class="card p-6 space-y-8 justify-between dark:bg-gray-800">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="space-y-4">
+                            <p class="text-gray-500 dark:text-gray-300 text-sm">Taux De Réponses</p>
+                            <h2 class="text-4xl font-bold text-gray-800 dark:text-gray-100">{{taux_reponses}}%</h2>
+                        </div>
+                        <div class="bg-emerald-100 dark:bg-emerald-900 p-3 rounded-full">
+                            <span class="text-emerald-500 material-icons-round">textsms</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full relative overflow-hidden">
+                            <div class="h-3 bg-emerald-500 rounded-full transition-all duration-500"
+                                style="width: {{ taux_reponses|default:0 }}%;"></div>
+                        </div>
+                        <div class="flex justify-between mt-2 text-xs text-gray-200 dark:text-gray-700">
+                        <span class="font-bold text-gray-400 dark:text-gray-500">|</span><span>|</span><span>|</span><span>|</span><span>|</span>
+                        <span class="font-bold text-gray-400 dark:text-gray-500">|</span><span>|</span><span>|</span><span>|</span><span>|</span><span class="font-bold text-gray-400 dark:text-gray-500">|</span>
+                        </div>
+                        <div class="flex justify-between mt-2 text-xs text-gray-400 dark:text-gray-300">
+                        <span>0%</span><span></span><span></span><span></span><span></span>
+                        <span></span><span></span><span></span><span></span><span></span><span>100%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deux graphiques : Analyse de Sentiment et Evolution du Churn -->
+            <div class="card bg-white/50 dark:bg-gray-800/70 p-4 grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Carte Analyse de Sentiment -->
+                <div class="card p-6 dark:bg-gray-800">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Analyse de Sentiment</h3>
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center">
+                            <div class="flex items-center mr-4">
+                                <div class="w-3 h-3 bg-emerald-500 rounded-full mr-2"></div>
+                                <span class="text-sm text-gray-600 dark:text-gray-300">Positif</span>
+                            </div>
+                            <div class="flex items-center mr-4">
+                                <div class="w-3 h-3 bg-amber-500 rounded-full mr-2"></div>
+                                <span class="text-sm text-gray-600 dark:text-gray-300">Neutre</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                                <span class="text-sm text-gray-600 dark:text-gray-300">Négatif</span>
+                            </div>
+                        </div>
+                     
+                    </div>
+                    <div class="flex justify-center">
+                        <div class="w-64 h-64">
+                            <canvas id="sentimentChart" width="237" height="237" style="display: block; box-sizing: border-box; height: 256px; width: 256px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <!-- Carte Evolution du Taux de Churn -->
+                <div class="card p-6 dark:bg-gray-800">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Évolution du Taux de Churn</h3>
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center">
+                            <div class="flex items-center mr-4">
+                                <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                                <span class="text-sm text-gray-600 dark:text-gray-300">Taux de churn</span>
+                            </div>
+                        </div>
+                     
+                    </div>
+                    <div class="h-64">
+                        <canvas id="churnChart" width="272" height="237" style="display: block; box-sizing: border-box; height: 256px; width: 294px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Carte Catégories de Problèmes -->
+            <div class="card bg-white/50 dark:bg-gray-800/70 p-4 grid grid-cols-1 lg:grid-cols-1 gap-6 mb-8">
+                <div class="card p-6 dark:bg-gray-800">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Catégories de Problèmes</h3>
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center">
+                            <div class="flex items-center mr-4">
+                                <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                                <span class="text-sm text-gray-600 dark:text-gray-300">Problèmes signalés</span>
+                            </div>
+                        </div>
+                      
+                    </div>
+                    <div class="h-80">
+                        <canvas id="problemsChart" width="612" height="296" style="display: block; box-sizing: border-box; height: 320px; width: 660px;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- Deux cartes : Top Services et Dispersion géographique -->
+            <div class="card bg-white/50 dark:bg-gray-800/70 p-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Carte Top Services -->
+                <div class="card p-6 dark:bg-gray-800">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Top Services</h3>
+                    <div class="flex justify-between items-center mb-4">
+                      
+                    </div>
+                    <div class="flex justify-center">
+                        <canvas id="horizontalBarChart" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+                <!-- Carte Dispersion géographique des clients -->
+                <div class="card p-6 bg-white dark:bg-gray-800 shadow rounded-lg">
+                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Répartition des clients geographiquement</h2>
+                    <div id='myDiv' style="width:460px ; height: 380px;"></div>
+                </div>
+            </div>
+            
+          
+        </div>
+         {% else %}
+        <div class="flex justify-center items-center h-96">
+            <p class="text-red-500 text-xl">Vous n'avez pas accès à ce contenu.</p>
+        </div>
+      {% endif %}
+    </main>
+
+<script>
+
+  const sidebar = document.getElementById('sidebar');
+  const toggleSidebar = document.getElementById('toggleSidebar');
+  const mainContent = document.getElementById('mainContent');
+  const submenuIds = ['problemsSubmenu', 'ameliorationSubmenu'];
+  const sidebarState = sessionStorage.getItem('sidebarState');
+
+  function restoreSubmenus() {
+    submenuIds.forEach(id => {
+      const submenu = document.getElementById(id);
+      if (!submenu) return;
+      const open = localStorage.getItem(id) === 'open';
+      if (open) {
+        submenu.classList.remove('hidden');
+        submenu.style.maxHeight = submenu.scrollHeight + 'px';
+      } else {
+        submenu.classList.add('hidden');
+        submenu.style.maxHeight = '0';
+      }
+    });
+  }
+
+  function closeAllSubmenusVisualOnly() {
+    submenuIds.forEach(id => {
+      const submenu = document.getElementById(id);
+      if (!submenu || submenu.classList.contains('hidden')) return;
+      submenu.style.maxHeight = '0';
+      submenu.addEventListener('transitionend', () => submenu.classList.add('hidden'), { once: true });
+      // NE PAS modifier localStorage ici
+    });
+  }
+
+  // Appliquer l'état initial de la sidebar
+  if (sidebarState === 'open') {
+    sidebar.classList.add('w-60');
+    sidebar.classList.remove('collapsed');
+    mainContent.classList.add("ml-60");
+    mainContent.classList.remove("ml-24");
+    restoreSubmenus();
+  } else {
+    sidebar.classList.remove('w-60');
+    sidebar.classList.add('w-24');
+    mainContent.classList.remove("ml-60");
+    mainContent.classList.add("ml-24");
+    sidebar.classList.add('collapsed');
+    closeAllSubmenusVisualOnly();
+  }
+
+  // Bouton toggle de la sidebar
+  toggleSidebar.addEventListener('click', () => {
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    if (isCollapsed) {
+      sidebar.classList.remove('collapsed');
+      sidebar.classList.remove('w-24');
+      sidebar.classList.add('w-60');
+      mainContent.classList.add("ml-60");
+      mainContent.classList.remove("ml-24");
+      sessionStorage.setItem('sidebarState', 'open');
+      restoreSubmenus(); // 👈 Restaurer les sous-menus si besoin
+    } else {
+      sidebar.classList.add('collapsed');
+      sidebar.classList.add('w-24');
+      sidebar.classList.remove('w-60');
+      mainContent.classList.remove("ml-60");
+      mainContent.classList.add("ml-24");
+      sessionStorage.setItem('sidebarState', 'closed');
+      closeAllSubmenusVisualOnly(); // 👈 Fermer visuellement les sous-menus
+    }
+  });
+
+
+
+  const sentimentData = {{ sentiment_data_json|safe }};
+document.addEventListener('DOMContentLoaded', function() {
+    // Graphique doughnut pour l'analyse de sentiment
+    const sentimentCtx = document.getElementById('sentimentChart').getContext('2d');
+    const sentimentChart = new Chart(sentimentCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Positif', 'Neutre', 'Négatif'],
+            datasets: [{
+                data: sentimentData ,
+                backgroundColor: [
+                    '#10B981',
+                    '#F59E0B',
+                    '#EF4444'
+                ],
+                hoverBackgroundColor: [
+                    '#059669',
+                    '#D97706',
+                    '#B91C1C'
+                ],
+                borderWidth: 0.5,
+                borderRadius: 3,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    display: false,
+                    labels: {
+                        color: '#757474'
+                    }
+                }
+            }
+        }
+    });
+    
+    // Graphique d'évolution du churn (ligne)
+    const churnData = {{ churn_data_json|safe }};
+    const churnLabels = churnData.map(item => item.mois);
+    const churnCounts = churnData.map(item => item.count);
+    const churnCtx = document.getElementById('churnChart').getContext('2d');
+    const churnChart = new Chart(churnCtx, {
+        type: 'line',
+        data: {
+            labels: churnLabels,
+            datasets: [{
+                label: 'Taux de Churn (%)',
+                data: churnCounts,
+                borderColor: '#EF4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#757474'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#757474',
+                        callback: function(value) {
+                            return value;
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false,
+                    labels: {
+                        color: '#757474'
+                    }
+                }
+            }
+        }
+    });
+    
+    // Graphique des catégories de problèmes (barres)
+    const problemsCtx = document.getElementById('problemsChart').getContext('2d');
+    const problemsChart = new Chart(problemsCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ problem_labels|safe }},  // Liste des noms de problèmes
+            datasets: [{
+                label: 'Nombre de problèmes signalés',
+                data: {{ problem_counts|safe }},  // Liste des valeurs réelles
+                backgroundColor: '#EF4444',
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#757474'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#757474'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false,
+                    labels: {
+                        color: '#757474'
+                    }
+                }
+            }
+        }
+    });
+
+    // Graphique horizontal des top services
+    const servicectx = document.getElementById('horizontalBarChart').getContext('2d');
+    const horizontalBarChart = new Chart(servicectx, {
+        type: 'bar',
+        data: {
+            labels: {{ top_labels|safe }},
+            datasets: [{
+                label: 'Usage (%)',
+                data: {{ top_counts|safe }},
+                backgroundColor: [
+                    '#ef4444',
+                    '#3b82f6',
+                    '#10b981',
+                    '#a855f7',
+                    '#fbbf24',
+                    '#f472b6' 
+                ],
+                borderRadius: 5,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#757474'
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: '#757474'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false,
+                    labels: {
+                        color: '#757474'
+                    }
+                }
+            }
+        }
+    });
+});
+  // Positionnement dynamique des points NPS et CSAT sur leur barre respective
+  const nps = {{ nps_score }};
+  const point = document.getElementById("nps-point");
+  const percent_nps = (nps / 10) * 100;
+  point.style.left = `calc(${percent_nps}% - 12px)`;
+
+  const csat = {{ csat_score }};
+  const pointcsat = document.getElementById("csat-point");
+  const percent_csat = (csat / 10) * 100;
+  pointcsat.style.left = `calc(${percent_csat}% - 12px)`;
+
+
+
+    // Graphique de dispersion géographique
+    // 6. Répartition des clients geographiquement (Carte Plotly)
+  const wilayas = {{ wilayas|safe }};
+
+  const buColors = {
+    'ALGER': '#2dee2a ',
+    'ORAN': '#BDB2FF',
+    'TLEMCEN': '#ffad55  ',
+    'SETIF': '#00b47b ',
+    'SUD': '#ee2aac  ',
+    'CENTRE': '#00ffbd ',
+    'CONSTANTINE': '#0061ff '
+  };
+
+  const traces = [];
+  const grouped = {};
+
+  // Regroupement des wilayas par BU
+  for (const w of wilayas) {
+    if (!grouped[w.bu]) grouped[w.bu] = [];
+    grouped[w.bu].push(w);
+  }
+
+  // Création des traces pour chaque BU
+  for (const bu in grouped) {
+    const group = grouped[bu];
+    traces.push({
+      type: 'scattergeo',
+      mode: 'markers',
+      name: bu,
+      lat: group.map(g => g.lat),
+      lon: group.map(g => g.lon),
+      text: group.map(g => `${g.name}<br>Clients: ${g.clients}`),
+      hoverinfo: 'text',
+      marker: {
+        size: group.map(g => Math.sqrt(g.clients) * 2),
+        color: buColors[bu],
+        line: { color: 'white', width: 1 },
+        sizemode: 'area',
+        opacity: 0.8
+      }
+    });
+  }
+
+  // Configuration de la carte Plotly
+  const layout = {
+    title: 'Client Distribution in Algeria',
+    geo: {
+      scope: 'africa',
+      center: { lat: 28, lon: 3 },
+      projection: { type: 'natural earth' },
+      lataxis: { range: [20, 38] },
+      lonaxis: { range: [-9, 18] },
+      showland: true,
+      landcolor: '#d6ffd4',
+      showocean: true,
+      oceancolor: '#a1ebf1 ',
+      countrycolor: '#444',
+      showcountries: true,
+      countrycolor: '#56a353 ',
+      coastlinecolor: '#56a353 ',
+      showcoastlines: true,
+      bgcolor: '#f2f2f2'
+    },
+    margin: {
+      l: 20,
+      r: 20,
+      t: 0,
+      b: 20
+    },
+    legend: {
+      x: -0.2,
+      y: 0.9,
+      orientation: 'v',
+      title: { text: 'BU' }
+    }
+  };
+
+  // Affichage de la carte Plotly
+  Plotly.newPlot('myDiv', traces, layout);
+</script>
+
+</body>
+</html>

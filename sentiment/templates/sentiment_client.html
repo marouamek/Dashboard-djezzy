@@ -1,0 +1,988 @@
+<!-- Début du document HTML principal -->
+<html lang="fr">
+    <head>
+    <!-- Métadonnées et configuration Tailwind CSS -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-cloud/1.2.5/d3.layout.cloud.min.js"></script>
+     <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        coreSans: ['"Core Sans C"', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+
+ <style>
+    /* Variables CSS pour les couleurs principales */
+    :root {
+                --primary-red: #e53e3e;
+                --dark-gray: #2d3748;
+                --light-gray: #edf2f7;
+                --white: #ffffff;
+            }
+    /* Masquer le texte du menu si la sidebar est réduite */
+    .collapsed .menu-text {
+      display: none;
+    }
+    /* Centrer les icônes du menu si la sidebar est réduite */
+    .collapsed .menu-icon {
+      justify-content: center;
+    }
+    /* Style de la sidebar */
+    .sidebar {
+        background-color: var(--white);
+        border-right: 1px solid #e2e8f0;
+        height: 100vh;
+        position: fixed;
+        width: 280px;
+        transition: all 0.3s;
+        z-index: 10;
+    }
+    /* Sidebar réduite */
+    .sidebar-collapsed {
+        width: 80px;
+    }
+    /* Style des cartes (cards) */
+    .card {
+        background-color: var(--white);
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    /* Séparateur de section */
+    .section-divider {
+        border-top: 1px solid #e2e8f0;
+        margin: 10px 0;
+    }
+    /* Bouton de toggle caché par défaut */
+    .toggle-btn {
+        display: none;
+    }
+    /* Animation de la sidebar */
+     #sidebar {
+      transition: width 0.3s ease,background-color 0.7s, color 0.7s;
+    }
+
+     #darkModeIcon {
+        transition: transform 0.3s ease;
+        }
+    #toggleDarkMode:hover #darkModeIcon {
+        transform: rotate(180deg);
+        }
+    body, .card, header, aside, main {
+    transition: background-color 0.7 ease, color 0.7s ease, border-color 0.4s ease;
+    }
+  </style>
+
+  <!-- Liens vers les polices et styles externes -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Core+Sans+C:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+   <link
+      rel="stylesheet"
+      href="/charts/vanilla/radial-gauge/examples/simple-radial-gauge/ag-example-styles.css"
+    />
+
+    <!-- Titre de la page -->
+    <title>Dashboard Sentiments Clients - Djezzy</title>
+    
+    <!-- Inclusion des librairies de graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-gauge"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ag-charts-enterprise@11.3.0/dist/umd/ag-charts-enterprise.js?t=1747399301504"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-wordcloud@4.0.0/dist/chartjs-chart-wordcloud.min.js"></script>
+    <script src="/charts/vanilla/radial-gauge/examples/simple-radial-gauge/main.js"></script>
+</head>
+<body class="bg-gray-200 text-sm h-max md:min-h-full font-coreSans">
+    <div class="flex h-full bg-gray-50">
+    <!-- Inclusion de la barre latérale -->
+    {% include "sidebarHome.html" %}
+    
+    <main id="mainContent" class="overflow-x-hidden flex-grow transition-all duration-300 max-w-full bg-gray-200 dark:bg-gray-950">
+        <!-- En-tête du dashboard -->
+        {% if user.is_authenticated and user.profile.role == 'bi_agent' or user.profile.role == 'call_center' or user.profile.role == 'customer_care' %}
+        
+        <header class="flex justify-between items-center bg-gray-50 dark:bg-gray-900 px-10 py-4 drop-shadow-sm">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Djezzy_Logo_2015.svg/696px-Djezzy_Logo_2015.svg.png" alt="Logo" class="w-12 h-auto">
+        <p class="text-gray-500 dark:text-gray-300 text-base font-medium"> {% now "l d F Y" %}</p>
+        <p class="text-gray-500 dark:text-gray-300 text-xl font-medium"> {% now " H:i " %}</p>
+        {% include "upper_bar_option.html" %}
+      </header>
+
+      
+        <div class=" p-10">
+
+            <!-- Titre principal du dashboard -->
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-2xl font-bold dark:text-gray-100 text-gray-800">Tableau de bord des Sentiments Clients</h1>
+                    <p class="text-gray-600 dark:text-gray-100">Vue d'ensemble de la satisfaction client</p>
+                </div>
+                
+                <div class="flex justify-left mt-6">
+                    <a href="{% url 'nps_prediction_commentaire' %}" class="btn px-7 py-4 rounded bg-rose-600 text-white font-bold hover:bg-rose-700">
+                              Tester le Model
+                    </a>
+                </div>
+            </div>
+            <!-- statestiques principales des sentiments  -->
+            <div class="card bg-white/50 dark:bg-gray-800/70 p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Carte taux commentaire -->
+                <div class="card p-6 dark:bg-gray-800 space-y-8 justify-between">
+                    <div class="flex justify-between  items-start mb-4">
+                        <div class=" space-y-4">
+                            <p class="text-gray-500 text-sm dark:border-gray-100 dark:text-gray-100">Taux de commentaires</p>
+                            <h2 class="text-3xl font-bold dark:text-gray-100 text-gray-800">{{ total_commentaires }}</h2>
+                        </div>
+                        <div class="bg-yellow-100 p-3 rounded-full">
+                           <span class="material-icons-round text-orange-500">comment</span>
+                        </div>
+                    </div>
+                    
+                </div>
+                <!-- Carte commentaire positif -->
+                <div class="card space-y-8 dark:bg-gray-800 p-6 justify-between">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class=" space-y-4">
+                            <p class="text-gray-500 text-sm dark:border-gray-100 dark:text-gray-100">Taux de commentaires positifs</p>
+                            <h2 class="text-3xl font-bold dark:text-gray-100 text-gray-800">{{ taux_positifs }}%</h2>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                           <span class="text-blue-500 material-icons-round">sentiment_satisfied</span>
+                        </div>
+                    </div>
+                    
+                </div>
+                <!-- Carte commentaire negatif -->
+                <div class="card p-6 space-y-8 dark:bg-gray-800 justify-between">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class=" space-y-4">
+                            <p class="text-gray-500 text-sm dark:border-gray-100 dark:text-gray-100">Taux de commentaires negatifs</p>
+                            <h2 class="text-3xl font-bold dark:text-gray-100 text-gray-800">{{ taux_negatifs }}%</h2>
+                        </div>
+                        <div class="bg-rose-100 p-3 rounded-full">
+                         <span class="text-rose-500 material-icons-round">sentiment_dissatisfied</span>
+                        </div>
+                    </div>
+    
+                </div>
+                <!-- Carte comentaire neutre -->
+                <div class="card p-6 space-y-8 dark:bg-gray-800 justify-between">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class=" space-y-4">
+                            <p class="text-gray-500 text-sm dark:border-gray-100 dark:text-gray-100">Taux De commentaire neutres</p>
+                            <h2 class="text-3xl font-bold dark:text-gray-100 text-gray-800">{{ taux_neutres }}%</h2>
+                        </div>
+                        <div class="bg-emerald-100 p-3 rounded-full">
+                            <span class="text-emerald-500 material-icons-round">textsms</span>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+   <div class="grid card bg-white/50 p-4 dark:bg-gray-800/70 flex grid-cols-3 flex  gap-6">
+                   
+                <!-- Left column: 2 cards stacked vertically -->
+                <div class="flex flex-col gap-6">
+                    <div class="card p-6 flex flex-col gap-6 dark:bg-gray-800/70 space-y-8 justify-between">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="space-y-4">
+                                <p class="text-gray-500 text-sm dark:text-gray-100">Score Sentiment moyen</p>
+                                <h2 class="text-3xl font-bold dark:text-gray-100 text-gray-800">{{ pourcentage_sentiment }}</h2>
+                            </div>
+                            <div class="bg-orange-100 p-3 rounded-full">
+                                <span class="material-icons-round text-orange-500">person</span>
+                            </div>
+                        </div>
+                        <div>
+                        <!-- Barre de progression NPS -->
+                        <div class="relative w-full h-3 rounded-full bg-gradient-to-r from-rose-500 via-yellow-400 to-emerald-500">
+                        <div id="nps-point"
+                            class="absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-white border-4 border-yellow-400 rounded-full shadow-md transition-all duration-300">
+                        </div>
+                        </div>
+                        <!-- Graduation de la barre -->
+                        <div class="flex justify-between mt-2 text-xs text-gray-200">
+                        <span class="font-bold text-gray-400">|</span><span>|</span><span>|</span><span>|</span><span >|</span>
+                        <span class="font-bold text-gray-400">|</span><span>|</span><span>|</span><span>|</span><span>|</span><span class="font-bold text-gray-400">|</span>
+                        </div>
+                        <div class="flex justify-between mt-2 text-xs text-gray-400">
+                        <span>-100</span><span></span><span></span><span></span><span></span>
+                        <span>0</span><span></span><span></span><span></span><span></span><span>+100</span>
+                        </div>
+                    </div>
+                    </div>
+                   
+                </div>
+                 <!-- Left column: 2 cards stacked vertically -->
+                <div class="flex flex-col gap-6">
+                    
+                    <div class="card p-6 flex flex-col gap-6 dark:bg-gray-800/70 space-y-8 justify-between">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="space-y-4">
+                                <p class="text-gray-500 text-sm dark:text-gray-100">NPS Moyen</p>
+                                <h2 class="text-3xl font-bold dark:text-gray-100 text-gray-800">{{ moyenne_score_sentiment }}</h2>
+                            </div>
+                            <div class="bg-orange-100 p-3 rounded-full">
+                            <span class="material-icons-round text-orange-500">sell</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card p-6 flex flex-col gap-6 dark:bg-gray-800/70 space-y-8 justify-between">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class=" space-y-4">
+                                <p class="text-gray-500 text-sm dark:text-gray-100">Taux de commentaires inconsistants</p>
+                                <h2 class="text-3xl font-bold dark:text-gray-100 text-gray-800">{{ pourcentage_inconsistants }}%</h2>
+                            </div>
+                            <div class="bg-orange-100 p-3 rounded-full">
+                                <span class="text-orange-500 material-icons-round">public</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Right column: 2 cards stacked vertically -->
+                <div class="flex flex-col gap-6">
+                    <div class="card p-6 flex flex-col gap-6 dark:bg-gray-800/70 space-y-8 justify-between">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="space-y-4">
+                                <p class="text-gray-500 text-sm dark:text-gray-100">Sentiment positif parmis les Promoteurs</p>
+                                <h2 class="text-3xl font-bold dark:text-gray-100 text-gray-800">{{ pourcentage_positif_promoteurs }}%</h2>
+                            </div>
+                            <div class="bg-orange-100 p-3 rounded-full">
+                                <span class="material-icons-round text-orange-500">help</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card p-6 flex flex-col gap-6 dark:bg-gray-800/70 space-y-8 justify-between">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="space-y-4">
+                                <p class="text-gray-500 text-sm dark:text-gray-100">Sentiment negatif parmis les detracteurs</p>
+                                <h2 class="text-3xl font-bold dark:text-gray-100 text-gray-800">{{ pourcentage_negatif_detracteurs }}%</h2>
+                            </div>
+                            <div class="bg-orange-100 p-3 rounded-full">
+                                <span class="material-icons-round text-orange-500">info</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+              </div>  
+            <!-- Section Visualisation et Test -->
+                      <div class="flex items-center my-6  mb-8">
+                        <h2 class="text-gray-500 font-semibold text-base mr-4 whitespace-nowrap dark:text-gray-100">
+                            Visualisation et test de commentaires
+                        </h2>
+                        <div class="flex-grow border-t-4 border-gray-300 "></div>
+                      </div>
+                      <div class="card p-6 dark:bg-gray-800 space-y-8 justify-between">
+                          <h3 class="text-lg font-semibold dark:text-gray-100 text-gray-800 mb-4">Nuage de mots les plus récurrents des Commentaires</h3>
+                              <svg id="word1" class="w-full h-[500px]"></svg>
+
+                          
+                      </div>  
+
+            <!-- Section Stats General -->
+            <div class="flex items-center content-center my-8">
+              <h2 class="text-gray-500 font-semibold text-base mr-4 whitespace-nowrap dark:text-gray-100">
+                  Statistiques des sentiments Par categories
+              </h2>
+              <div class="flex-grow border-t-4 border-gray-300 "></div>
+
+            </div>
+            <div class="float-right mb-4">
+               {% include "filter.html" %}
+            </div>
+            <!-- General Grid -->
+                  <div class="card slider-container bg-white/50 dark:bg-gray-800/70 p-4 mb-10" style="overflow:hidden; position:relative; width:100%;">
+                    <div class="slider-track flex transition-transform duration-500" style="will-change:transform;">
+                      
+                      <!-- REAL SLIDES -->
+                      <div class="slide grid grid-cols-2 gap-6 min-w-full  p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
+                        <!-- Répartition des sentiments sur Internet -->
+                        <div class="card p-6 dark:bg-gray-800 space-y-8 justify-between">
+                          <h3 class="text-lg font-semibold dark:text-gray-100 text-gray-800 mb-4">Évolution des sentiment sur Internet dans le Temps</h3>
+                            <div class="flex justify-between items-center mb-4">
+                                <div class="flex  items-center">
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-emerald-500"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Sentiment positif</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-rose-500"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Sentiment negatif</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-yellow-400"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Sentiment neutre</span>
+                                    </div>
+                                </div>
+                            
+                               
+                        
+                            </div>
+                            <div class="flex items-center">
+                                <canvas id="SentimentInternetChart" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Répartition des sentiments sur Reseau -->
+                        <div class="card p-6 dark:bg-gray-800 space-y-8 justify-between">
+                          <h3 class="text-lg font-semibold dark:text-gray-100 text-gray-800 mb-4">Évolution des sentiments sur le Reseau dans le Temps</h3>
+                            <div class="flex justify-between items-center mb-4">
+                                 <div class="flex  items-center">
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-emerald-500"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Sentiment positif</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-rose-500"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Sentiment negatif</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-yellow-400"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Sentiment neutre</span>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="flex  items-center">
+                                <canvas id="SentimentReseauChart" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+                      </div>
+                      <div class="slide grid grid-cols-2 gap-6 min-w-full  p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
+                        <!-- Répartition des sentiments sur Le service client -->
+                        <div class="card p-6 dark:bg-gray-800 space-y-8 justify-between">
+                          <h3 class="text-lg font-semibold dark:text-gray-100 text-gray-800 mb-4">Évolution des sentiments sur Le service client dans le Temps</h3>
+                            <div class="flex justify-between items-center mb-4">
+                                <div class="flex  items-center">
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-teal-600"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Sentiment positif</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-[#F43F5E]"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Sentiment negatif</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-[#FACC15]"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Sentiment neutre</span>
+                                    </div>
+                                </div>
+                            
+                              
+
+                                <select class="border dark:bg-gray-800/70 dark:text-gray-100 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+                                   <option class="dark:text-gray-100 text-gray-600 dark:bg-gray-800/70">2022</option>
+                                </select>
+                            </div>
+                            <div class="flex  items-center">
+                                <canvas id="SentimentServiceChart" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Répartition des sentiments sur les Prix et Tarification -->
+                        <div class="card p-6 dark:bg-gray-800 space-y-8 justify-between">
+                          <h3 class="text-lg font-semibold dark:text-gray-100 text-gray-800 mb-4">Évolution des sentiments sur les Prix et Tarification dans le Temps</h3>
+                            <div class="flex justify-between items-center mb-4">
+                                <div class="flex  items-center">
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-teal-600"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Sentiment positif</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-[#F43F5E]"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Sentiment negatif</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-[#FACC15]"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Sentiment neutre</span>
+                                    </div>
+                                </div>
+                            
+                              
+
+                            </div>
+                            <div class="flex  items-center">
+                                <canvas id="SentimentTarificationChart" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+                      </div>
+                      <div class="slide grid grid-cols-2 gap-6 min-w-full  p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
+                        <!-- Répartition des sentiments sur les Offres -->
+                        <div class="card p-6 dark:bg-gray-800 space-y-8 justify-between">
+                          <h3 class="text-lg font-semibold dark:text-gray-100 text-gray-800 mb-4">Évolution des sentiments sur les Offres dans le Temps</h3>
+                            <div class="flex justify-between items-center mb-4">
+                                <div class="flex  items-center">
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-teal-600"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Sentiment positif</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-[#F43F5E]"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Sentiment negatif</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-[#FACC15]"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Sentiment neutre</span>
+                                    </div>
+                                </div>
+                            
+                               
+                            </div>
+                            <div class="flex  items-center">
+                                <canvas id="SentimentOffreChart" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Répartition d'autre sentiments -->
+                        <div class="card p-6 dark:bg-gray-800 space-y-8 justify-between">
+                          <h3 class="text-lg font-semibold dark:text-gray-100 text-gray-800 mb-4">Évolution d'autres sentiments dans le Temps</h3>
+                            <div class="flex justify-between items-center mb-4">
+                                <div class="flex  items-center">
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-teal-600"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Sentiment positif</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-[#F43F5E]"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Sentiment negatif</span>
+                                    </div>
+                                    <div class="flex items-center mr-4">
+                                      <div class="w-3 h-3 rounded-full mr-2 bg-[#FACC15]"></div>
+                                      <span class="text-sm dark:text-gray-100 text-gray-600">Sentiment neutre</span>
+                                    </div>
+                                </div>
+                            
+                               
+                            </div>
+                            <div class="flex  items-center">
+                                <canvas id="SentimentAutreChart" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+                      </div> 
+                      
+                    </div>
+                    <div class="controls flex justify-center mt-4 gap-4">
+                        <button id="prevBtn" class="btn w-10 h-10 flex items-center justify-center rounded-full bg-white hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600" aria-label="Previous">
+                          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"/>
+                          </svg>
+                        </button>
+                        <button id="nextBtn" class="btn w-10 h-10 flex items-center justify-center rounded-full bg-white hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600" aria-label="Next">
+                          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                           <polyline points="9 6 15 12 9 18"/>
+                          </svg>
+                        </button>
+                     </div>
+                  </div>
+
+
+
+
+
+                      
+        </div>              
+         {% else %}
+        <div class="flex justify-center items-center h-96">
+            <p class="text-red-500 text-xl">Vous n'avez pas accès à ce contenu.</p>
+        </div>
+      {% endif %}
+    </main>
+
+
+<!-- Script principal pour la gestion de l'UI et des graphiques -->
+<script>
+
+  const sidebar = document.getElementById('sidebar');
+  const toggleSidebar = document.getElementById('toggleSidebar');
+  const mainContent = document.getElementById('mainContent');
+  const submenuIds = ['problemsSubmenu', 'ameliorationSubmenu'];
+  const sidebarState = sessionStorage.getItem('sidebarState');
+
+  function restoreSubmenus() {
+    submenuIds.forEach(id => {
+      const submenu = document.getElementById(id);
+      if (!submenu) return;
+      const open = localStorage.getItem(id) === 'open';
+      if (open) {
+        submenu.classList.remove('hidden');
+        submenu.style.maxHeight = submenu.scrollHeight + 'px';
+      } else {
+        submenu.classList.add('hidden');
+        submenu.style.maxHeight = '0';
+      }
+    });
+  }
+
+  function closeAllSubmenusVisualOnly() {
+    submenuIds.forEach(id => {
+      const submenu = document.getElementById(id);
+      if (!submenu || submenu.classList.contains('hidden')) return;
+      submenu.style.maxHeight = '0';
+      submenu.addEventListener('transitionend', () => submenu.classList.add('hidden'), { once: true });
+      // NE PAS modifier localStorage ici
+    });
+  }
+
+  // Appliquer l'état initial de la sidebar
+  if (sidebarState === 'open') {
+    sidebar.classList.add('w-60');
+    sidebar.classList.remove('collapsed');
+    mainContent.classList.add("ml-60");
+    mainContent.classList.remove("ml-24");
+    restoreSubmenus();
+  } else {
+    sidebar.classList.remove('w-60');
+    sidebar.classList.add('w-24');
+    mainContent.classList.remove("ml-60");
+    mainContent.classList.add("ml-24");
+    sidebar.classList.add('collapsed');
+    closeAllSubmenusVisualOnly();
+  }
+
+  // Bouton toggle de la sidebar
+   toggleSidebar.addEventListener('click', () => {
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    if (isCollapsed) {
+      sidebar.classList.remove('collapsed');
+      sidebar.classList.remove('w-24');
+      sidebar.classList.add('w-60');
+      mainContent.classList.add("ml-60");
+      mainContent.classList.remove("ml-24");
+      sessionStorage.setItem('sidebarState', 'open');
+      restoreSubmenus(); // 👈 Restaurer les sous-menus si besoin
+    } else {
+      sidebar.classList.add('collapsed');
+      sidebar.classList.add('w-24');
+      sidebar.classList.remove('w-60');
+      mainContent.classList.remove("ml-60");
+      mainContent.classList.add("ml-24");
+      sessionStorage.setItem('sidebarState', 'closed');
+      closeAllSubmenusVisualOnly(); // 👈 Fermer visuellement les sous-menus
+    }
+  });
+
+  // Positionnement dynamique des points NPS et CSAT sur leur barre respective
+  const nps = {{ pourcentage_sentiment }};
+  const point = document.getElementById("nps-point");
+  const percent_nps = nps * 3;
+  point.style.left = `calc(${percent_nps}% - 12px)`;
+
+
+
+
+
+const track = document.querySelector('.slider-track');
+const slides = document.querySelectorAll('.slide');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+let currentIndex = 0;
+
+function updateSlider() {
+  track.style.transform = `translateX(-${currentIndex * 100}%)`;
+}
+
+nextBtn.addEventListener('click', () => {
+  if (currentIndex < slides.length - 1) {
+    currentIndex++;
+  } else {
+    currentIndex = 0;
+  }
+  updateSlider();
+});
+
+prevBtn.addEventListener('click', () => {
+  if (currentIndex > 0) {
+    currentIndex--;
+  } else {
+    currentIndex = slides.length - 1;
+  }
+  updateSlider();
+});
+
+   // Initialisation du graphique des Sentiment Internet dans le temps
+  const internetctx = document.getElementById('SentimentInternetChart').getContext('2d');
+  const SentimentInternetChart = new Chart(internetctx, {
+    type: 'line',
+    data: {
+      labels:  {{ mois|safe }},
+      datasets: [
+        {
+          label: 'Sentiment Positif',
+          data:{{ nb_positif|safe }},
+          borderColor: '#10B981',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Sentiment Negatif',
+          data: {{ nb_negatif|safe }},
+          borderColor: '#F43F5E',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Sentiment Neutre',
+          data:  {{ nb_neutre|safe }},
+          borderColor: '#FACC15',
+          fill: false,
+          tension: 0.3
+        }
+
+      ]
+    },
+    options: {
+      maintainAspectRatio: false,
+      responsive: true,
+      plugins: {
+            legend: {
+          display: false // Masquer la légende
+        }
+      },
+      scales: {
+        y: {
+          title: {
+            display: true,
+            text: 'Nombre de signalements'
+          },
+          beginAtZero: true
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Mois'
+          }
+        }
+      }
+    }
+  });
+
+  // Initialisation du graphique des Sentiment Service dans le temps
+  const internetctx1 = document.getElementById('SentimentServiceChart').getContext('2d');
+  const SentimentServiceChart = new Chart(internetctx1, {
+    type: 'line',
+    data: {
+      labels:  {{ liste_mois_service|safe }},
+      datasets: [
+        {
+          label: 'Sentiment Positif',
+          data: {{ nb_positifs_service|safe }},
+          borderColor: '#10B981',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Sentiment Negatif',
+          data: {{ nb_negatifs_service|safe }},
+          borderColor: '#F43F5E',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Sentiment Neutre',
+          data:{{ nb_neutres_service|safe }},
+          borderColor: '#FACC15',
+          fill: false,
+          tension: 0.3
+        }
+
+      ]
+    },
+    options: {
+      maintainAspectRatio: false,
+      responsive: true,
+      plugins: {
+            legend: {
+          display: false // Masquer la légende
+        }
+      },
+      scales: {
+        y: {
+          title: {
+            display: true,
+            text: 'Nombre de signalements'
+          },
+          beginAtZero: true
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Mois'
+          }
+        }
+      }
+    }
+  });
+
+  // Initialisation du graphique des Sentiment Reseau dans le temps
+  const internetctx2 = document.getElementById('SentimentReseauChart').getContext('2d');
+  const SentimentReseauChart = new Chart(internetctx2, {
+    type: 'line',
+    data: {
+      labels: {{ liste_mois_appel|safe }},
+      datasets: [
+        {
+          label: 'Sentiment Positif',
+          data: {{ nb_positifs_appel|safe }},
+          borderColor: '#10B981',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Sentiment Negatif',
+          data: {{ nb_negatifs_appel|safe }},
+          borderColor: '#F43F5E',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Sentiment Neutre',
+          data:  {{ nb_neutres_appel|safe }},
+          borderColor: '#FACC15',
+          fill: false,
+          tension: 0.3
+        }
+
+      ]
+    },
+    options: {
+      maintainAspectRatio: false,
+      responsive: true,
+      plugins: {
+            legend: {
+          display: false // Masquer la légende
+        }
+      },
+      scales: {
+        y: {
+          title: {
+            display: true,
+            text: 'Nombre de signalements'
+          },
+          beginAtZero: true
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Mois'
+          }
+        }
+      }
+    }
+  });
+
+  // Initialisation du graphique des Sentiment Tarfication dans le temps
+  const internetctx3 = document.getElementById('SentimentTarificationChart').getContext('2d');
+  const SentimentTarificationChart = new Chart(internetctx3, {
+    type: 'line',
+    data: {
+      labels: {{ liste_mois_prix|safe }},
+      datasets: [
+        {
+          label: 'Sentiment Positif',
+          data:  {{ nb_positifs_prix|safe }},
+          borderColor: '#10B981',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Sentiment Negatif',
+          data:  {{ nb_negatifs_prix|safe }},
+          borderColor: '#F43F5E',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Sentiment Neutre',
+          data:  {{ nb_neutres_prix|safe }},
+          borderColor: '#FACC15',
+          fill: false,
+          tension: 0.3
+        }
+
+      ]
+    },
+    options: {
+      maintainAspectRatio: false,
+      responsive: true,
+      plugins: {
+            legend: {
+          display: false // Masquer la légende
+        }
+      },
+      scales: {
+        y: {
+          title: {
+            display: true,
+            text: 'Nombre de signalements'
+          },
+          beginAtZero: true
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Mois'
+          }
+        }
+      }
+    }
+  });
+
+  // Initialisation du graphique des Sentiment Offre dans le temps
+  const internetctx4 = document.getElementById('SentimentOffreChart').getContext('2d');
+  const SentimentOffreChart = new Chart(internetctx4, {
+    type: 'line',
+    data: {
+      labels:  {{ liste_mois_offre|safe }},
+      datasets: [
+        {
+          label: 'Sentiment Positif',
+          data:  {{ nb_positifs_offre|safe }},
+          borderColor: '#10B981',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Sentiment Negatif',
+          data: {{ nb_negatifs_offre|safe }},
+          borderColor: '#F43F5E',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Sentiment Neutre',
+          data: {{ nb_neutres_offre|safe }},
+          borderColor: '#FACC15',
+          fill: false,
+          tension: 0.3
+        }
+
+      ]
+    },
+    options: {
+      maintainAspectRatio: false,
+      responsive: true,
+      plugins: {
+            legend: {
+          display: false // Masquer la légende
+        }
+      },
+      scales: {
+        y: {
+          title: {
+            display: true,
+            text: 'Nombre de signalements'
+          },
+          beginAtZero: true
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Mois'
+          }
+        }
+      }
+    }
+  });
+
+  // Initialisation du graphique des Sentiment Autre dans le temps
+  const internetctx5 = document.getElementById('SentimentAutreChart').getContext('2d');
+  const SentimentAutreChart = new Chart(internetctx5, {
+    type: 'line',
+    data: {
+      labels: {{ liste_mois_autre|safe }},
+      datasets: [
+        {
+          label: 'Sentiment Positif',
+          data: {{ nb_positifs_autre|safe }},
+          borderColor: '#10B981',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Sentiment Negatif',
+          data: {{ nb_negatifs_autre|safe }},
+          borderColor: '#F43F5E',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Sentiment Neutre',
+          data: {{ nb_neutres_autre|safe }},
+          borderColor: '#FACC15',
+          fill: false,
+          tension: 0.3
+        }
+
+      ]
+    },
+    options: {
+      maintainAspectRatio: false,
+      responsive: true,
+      plugins: {
+            legend: {
+          display: false // Masquer la légende
+        }
+      },
+      scales: {
+        y: {
+          title: {
+            display: true,
+            text: 'Nombre de signalements'
+          },
+          beginAtZero: true
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Mois'
+          }
+        }
+      }
+    }
+  });
+  const colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"];
+    const words = {{ mots_js|safe }};
+
+    const layout = d3.layout.cloud()
+      .size([1500, 400])
+      .words(words.map(d => ({ text: d.key, size: d.value * 0.02 + 5  })))
+      .padding(10)
+      .rotate(() => ~~(Math.random() * 2) * 90)
+      .fontSize(d => d.size)
+      .on("end", draw);
+
+    layout.start();
+
+    function draw(words) {
+      d3.select("#word1")
+        .append("g")
+        .attr("transform", "translate(300,250)")
+        .selectAll("text")
+        .data(words)
+        .enter().append("text")
+        .style("font-size", d => d.size + "px")
+        .style("fill", (d, i) => colors[i % colors.length])
+        .attr("text-anchor", "middle")
+        .attr("transform", d => `translate(${d.x},${d.y}) rotate(${d.rotate})`)
+        .text(d => d.text);
+    };
+
+
+ 
+</script>
+
+</body>
+</html>

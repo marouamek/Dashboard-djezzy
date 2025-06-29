@@ -1,0 +1,787 @@
+<!-- Début du document HTML principal -->
+<html lang="fr">
+    <head>
+    <!-- Métadonnées et configuration Tailwind CSS -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+  
+  <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        coreSans: ['"Core Sans C"', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+   <style>
+    /* Variables CSS pour les couleurs principales */
+    :root {
+                --primary-red: #e53e3e;
+                --dark-gray: #2d3748;
+                --light-gray: #edf2f7;
+                --white: #ffffff;
+            }
+    /* Masquer le texte du menu si la sidebar est réduite */
+    .collapsed .menu-text {
+      display: none;
+    }
+    /* Centrer les icônes du menu si la sidebar est réduite */
+    .collapsed .menu-icon {
+      justify-content: center;
+    }
+    /* Style de la sidebar */
+    .sidebar {
+        background-color: var(--white);
+        border-right: 1px solid #e2e8f0;
+        height: 100vh;
+        position: fixed;
+        width: 280px;
+        transition: all 0.3s;
+        z-index: 10;
+    }
+    /* Sidebar réduite */
+    .sidebar-collapsed {
+        width: 80px;
+    }
+    /* Style des cartes (cards) */
+    .card {
+        background-color: var(--white);
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    /* Séparateur de section */
+    .section-divider {
+        border-top: 1px solid #e2e8f0;
+        margin: 10px 0;
+    }
+    /* Bouton de toggle caché par défaut */
+    .toggle-btn {
+        display: none;
+    }
+    /* Animation de la sidebar */
+     #sidebar {
+      transition: width 0.3s ease,background-color 0.7s, color 0.7s;
+    }
+
+     #darkModeIcon {
+        transition: transform 0.3s ease;
+        }
+    #toggleDarkMode:hover #darkModeIcon {
+        transform: rotate(180deg);
+        }
+    body, .card, header, aside, main {
+    transition: background-color 0.7 ease, color 0.7s ease, border-color 0.4s ease;
+    }
+  </style>
+  <!-- Liens vers les polices et styles externes -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Core+Sans+C:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+   <link
+      rel="stylesheet"
+      href="/charts/vanilla/radial-gauge/examples/simple-radial-gauge/ag-example-styles.css"
+    />
+
+    <!-- Titre de la page -->
+    <title>Dashboard Problem de service - Djezzy</title>
+    
+    <!-- Inclusion des librairies de graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-gauge"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ag-charts-enterprise@11.3.0/dist/umd/ag-charts-enterprise.js?t=1747399301504"></script>
+    <script src="/charts/vanilla/radial-gauge/examples/simple-radial-gauge/main.js"></script>
+</head>
+<body class="bg-gray-200 text-sm h-max md:min-h-full font-coreSans">
+    <div class="flex h-full bg-gray-50">
+    <!-- Inclusion de la barre latérale -->
+    {% include "sidebarHome.html" %}
+    
+   <main id="mainContent" class="overflow-x-hidden flex-grow transition-all duration-300 max-w-full bg-gray-200 dark:bg-gray-950">
+      {% if user.is_authenticated and user.profile.role == 'bi_agent' or user.profile.role == 'call_center_employe' %}
+
+        
+    <!-- En-tête du dashboard -->
+    <header class="flex justify-between items-center bg-gray-50 dark:bg-gray-900 px-10 py-4 drop-shadow-sm transition-all duration-300">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Djezzy_Logo_2015.svg/696px-Djezzy_Logo_2015.svg.png" alt="Logo" class="w-12 h-auto">
+        <p class="text-gray-500 dark:text-gray-300 text-base font-medium"> {% now "l d F Y" %}</p>
+        <p class="text-gray-500 dark:text-gray-300 text-xl font-medium"> {% now " H:i " %}</p>
+        {% include "upper_bar_option.html" %}
+    </header>
+    <div class="p-10">
+
+        <!-- Titre principal -->
+        <div class="flex justify-between items-center mb-10">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Statistique des Problèmes de service client</h1>
+           {% include "filter.html" %}
+        </div>
+
+        <div class="grid card bg-white/50 dark:bg-gray-800/70 p-4 flex grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8 transition-all duration-300">
+            <!-- Taux Global de Problèmes de service client -->
+            <div class="card w-full space-y-6 p-6 dark:bg-gray-800 transition-all duration-300">
+                <div class="space-y-2 mb-8">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Taux Global du Problème de service client</h3>
+                    <div class="flex items-center mb-8">
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-rose-500"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Problème de service client</span>
+                        </div>
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-gray-300"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Autre</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Problemes de service client doughnut  -->
+                <div class="flex justify-center items-center my-8">
+                    <div class="flex items-center">
+                        <canvas id="ServiceProblemsDoughnut" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- Taux detailé des problème de service client-->
+            <div class="card h-auto space-y-6 p-6 dark:bg-gray-800 transition-all duration-300">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Taux détaillé des problèmes de service client</h3>
+                <div class="card flex text-shadow-lg bg-rose-50 dark:bg-rose-900/40 border border-rose-600/40 py-3 px-6 rounded-full justify-between items-center transition-all duration-300">
+                    <div class="flex items-center gap-2">
+                        <p class="text-rose-500 font-semibold text-base">Attente prolongée :</p>
+                        <h2 class="text-xl font-bold text-rose-500">{{ AttenteProlongee }}%</h2>
+                    </div>
+                    <div class="bg-rose-50 dark:bg-rose-900/10 rounded-full">
+                        <span class="text-rose-500 text-3xl material-icons-round">schedule</span>
+                    </div>
+                </div>  
+                <div class="card flex text-shadow-lg bg-blue-50 dark:bg-blue-900/40 border border-blue-600/40 py-3 px-6 rounded-full justify-between items-center transition-all duration-300">
+                    <div class="flex items-center gap-2">
+                        <p class="text-blue-500 font-semibold text-base">Réclamations ignorées :</p>
+                        <h2 class="text-xl font-bold text-blue-500">{{ RéclamationsIgnorees }}%</h2>
+                    </div>
+                    <div class="bg-blue-50 dark:bg-blue-900/0 rounded-full">
+                        <span class="text-blue-500 text-2xl material-icons-round">block</span>
+                    </div>
+                </div>
+                <div class="card flex text-shadow-lg bg-amber-50/50 dark:bg-amber-900/40 border border-amber-500/80 py-3 px-6 rounded-full justify-between items-center transition-all duration-300">
+                    <div class="flex items-center gap-2">
+                        <p class="text-amber-500 font-semibold text-base">Personnel malpoli :</p>
+                        <h2 class="text-xl font-bold text-amber-500">{{ PersonnelMalpoli }}%</h2>
+                    </div>
+                    <div class="bg-amber-40 dark:bg-amber-900/0 rounded-full">
+                        <span class="text-amber-500 text-2xl material-icons-round">heart_broken</span>
+                    </div>
+                </div>
+                <div class="card flex text-shadow-lg bg-emerald-50 dark:bg-emerald-900/40 border border-emerald-600/40 py-3 px-6 rounded-full justify-between items-center transition-all duration-300">
+                    <div class="flex justify-between items-center gap-2">
+                        <p class="text-emerald-500 font-semibold text-base">Agence trop loin :</p>
+                        <h2 class="text-xl font-bold text-emerald-500">{{ AgenceTropLoin }}%</h2>
+                    </div>
+                    <div class="bg-emerald-50 dark:bg-emerald-900/0 rounded-full">
+                        <span class="text-emerald-500 text-3xl material-icons-round">domain</span>
+                    </div>
+                </div> 
+                <div class="card flex text-shadow-lg bg-orange-50 dark:bg-orange-900/40 border border-orange-400/50 py-3 px-6 rounded-full justify-between items-center transition-all duration-300">
+                    <div class="flex justify-between items-center gap-2">
+                        <p class="text-orange-400 font-semibold text-base">Offre indisponible :</p>
+                        <h2 class="text-xl font-bold text-orange-400">{{ OffreIndisponible }}%</h2>
+                    </div>
+                    <div class="bg-orange-40 dark:bg-orange-900/0 rounded-full">
+                        <span class="text-orange-400 text-3xl material-icons-round">money_off</span>
+                    </div>
+                </div>                    
+            </div>
+        </div>
+        <!-- Graphiques Problemes de service client -->
+        <div class="grid card bg-white/50 dark:bg-gray-800/70 p-4 grid-cols-1 gap-6 mb-8 transition-all duration-300">
+            <div class="card p-6 dark:bg-gray-800 transition-all duration-300">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Évolution des Problèmes de service client dans le Temps</h3>
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center">
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#FF6384]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Attente prolongée</span>
+                        </div>
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#36A2EB]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Réclamations ignorées</span>
+                        </div>
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#FACC15]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Personnel malpoli</span>
+                        </div>
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#10B981]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Agence trop loin</span>
+                        </div>
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#FFA726]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Offre indisponible</span>
+                        </div>
+                    </div>
+                   
+                </div>
+                <div class="flex items-center">
+                    <canvas id="ServiceIssuesChart" class="w-full h-full"></canvas>
+                </div>
+            </div>
+        </div>             
+        
+        <div class="grid card bg-white/50 dark:bg-gray-800/70 p-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8 transition-all duration-300">
+            <!-- Répartition des Problèmes de service client par tranche d’âge -->   
+            <div class="card p-6 dark:bg-gray-800 transition-all duration-300">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Répartition des Problèmes de service client par tranche d’âge</h3>
+                <div class="flex justify-between items-end mb-4">
+                    <div class="flex grid grid-cols-1 gap-3 items-center">
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#FF6384]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Attente prolongée</span>
+                        </div>
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#36A2EB]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Réclamations ignorées</span>
+                        </div>
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#FACC15]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Personnel malpoli</span>
+                        </div>
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#10B981]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Agence trop loin</span>
+                        </div>
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#FFA726]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Offre indisponible</span>
+                        </div>
+                    </div>
+                </div>
+                 <select id="problemTypeFilter1" class="border rounded-md px-3 py-1 text-sm dark:bg-gray-900 dark:text-gray-100 mb-4">
+                        <option value="Attente prolongée">Attente prolongée</option>
+                        <option value="Réclamations ignorées">Réclamations ignorées</option>
+                        <option value="Personnel malpoli">Personnel malpoli</option>
+                        <option value="Agence trop loin">Agence trop loin</option>
+                        <option value="Offre indisponible">Offre indisponible</option>                                
+                    </select>
+                <div class="flex justify-center">
+                    <div class="w-full h-96">
+                        <canvas id="ageBarChart" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- Répartition des Problèmes de service client par Region --> 
+            <div class="card p-6 dark:bg-gray-800 transition-all duration-300">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Répartition Des Problèmes de service client par Région</h3>
+                <div class="flex justify-between items-end mb-4">
+                    <div class="flex grid grid-cols-1 gap-3 items-center mb-4">
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#FF6384]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Attente prolongée</span>
+                        </div>
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#36A2EB]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Réclamations ignorées</span>
+                        </div>
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#FACC15]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Personnel malpoli</span>
+                        </div>
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#10B981]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Agence trop loin</span>
+                        </div>
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#FFA726]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Offre indisponible</span>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="h-96 mt-8">
+                    <canvas id="regionBarChart" class="w-full h-full"></canvas>
+                </div>
+            </div>
+        </div> 
+        <!-- Répartition par Type d’appareil -->
+        <div class="grid card bg-white/50 dark:bg-gray-800/70 p-4 grid-cols-1 gap-6 mb-8 transition-all duration-300"> 
+            <div class="card p-6 dark:bg-gray-800 transition-all duration-300">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Répartition des Problèmes de service client par Type d’appareil</h3>
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center">
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#FF6384]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Attente prolongée</span>
+                        </div>
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#36A2EB]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Réclamations ignorées</span>
+                        </div>
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#FACC15]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Personnel malpoli</span>
+                        </div>
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#10B981]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Agence trop loin</span>
+                        </div>
+                        <div class="flex items-center mr-4">
+                            <div class="w-3 h-3 rounded-full mr-2 bg-[#FFA726]"></div>
+                            <span class="text-sm text-gray-600 dark:text-gray-300">Offre indisponible</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-center">
+                    <div class="w-full h-96">
+                        <canvas id="deviceTypeBarChart" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>   
+    </div>
+    {% else %}
+        <div class="flex justify-center items-center h-96">
+            <p class="text-red-500 text-xl">Vous n'avez pas accès à ce contenu.</p>
+        </div>
+        {% endif %}
+    </main>
+
+<!-- Script principal pour la gestion de l'UI et des graphiques -->
+<script>
+ const sidebar = document.getElementById('sidebar');
+  const toggleSidebar = document.getElementById('toggleSidebar');
+  const mainContent = document.getElementById('mainContent');
+  const submenuIds = ['problemsSubmenu', 'ameliorationSubmenu'];
+  const sidebarState = sessionStorage.getItem('sidebarState');
+
+  function restoreSubmenus() {
+    submenuIds.forEach(id => {
+      const submenu = document.getElementById(id);
+      if (!submenu) return;
+      const open = localStorage.getItem(id) === 'open';
+      if (open) {
+        submenu.classList.remove('hidden');
+        submenu.style.maxHeight = submenu.scrollHeight + 'px';
+      } else {
+        submenu.classList.add('hidden');
+        submenu.style.maxHeight = '0';
+      }
+    });
+  }
+
+  function closeAllSubmenusVisualOnly() {
+    submenuIds.forEach(id => {
+      const submenu = document.getElementById(id);
+      if (!submenu || submenu.classList.contains('hidden')) return;
+      submenu.style.maxHeight = '0';
+      submenu.addEventListener('transitionend', () => submenu.classList.add('hidden'), { once: true });
+      // NE PAS modifier localStorage ici
+    });
+  }
+
+  // Appliquer l'état initial de la sidebar
+  if (sidebarState === 'open') {
+    sidebar.classList.add('w-60');
+    sidebar.classList.remove('collapsed');
+    mainContent.classList.add("ml-60");
+    mainContent.classList.remove("ml-24");
+    restoreSubmenus();
+  } else {
+    sidebar.classList.remove('w-60');
+    sidebar.classList.add('w-24');
+    mainContent.classList.remove("ml-60");
+    mainContent.classList.add("ml-24");
+    sidebar.classList.add('collapsed');
+    closeAllSubmenusVisualOnly();
+  }
+
+  // Bouton toggle de la sidebar
+  toggleSidebar.addEventListener('click', () => {
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    if (isCollapsed) {
+      sidebar.classList.remove('collapsed');
+      sidebar.classList.remove('w-24');
+      sidebar.classList.add('w-60');
+      mainContent.classList.add("ml-60");
+      mainContent.classList.remove("ml-24");
+      sessionStorage.setItem('sidebarState', 'open');
+      restoreSubmenus(); // 👈 Restaurer les sous-menus si besoin
+    } else {
+      sidebar.classList.add('collapsed');
+      sidebar.classList.add('w-24');
+      sidebar.classList.remove('w-60');
+      mainContent.classList.remove("ml-60");
+      mainContent.classList.add("ml-24");
+      sessionStorage.setItem('sidebarState', 'closed');
+      closeAllSubmenusVisualOnly(); // 👈 Fermer visuellement les sous-menus
+    }
+  });
+
+  const internetctx = document.getElementById('ServiceIssuesChart').getContext('2d');
+  const ServiceIssuesChart = new Chart(internetctx, {
+    type: 'line',
+    data: {
+      labels: {{ liste_mois|safe }}, 
+      datasets: [
+        {
+          label: 'Attente prolongée',
+          data:  {{ nombre_probleme_1|safe }},
+          borderColor: '#FF6384',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Réclamations ignorées',
+          data:  {{ nombre_probleme_2|safe }},
+          borderColor: '#36A2EB',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Personnel malpoli',
+          data:{{ nombre_probleme_3|safe }},
+          borderColor: '#FACC15',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Agence trop loin',
+          data:  {{ nombre_probleme_4|safe }},
+          borderColor: '#10B981',
+          fill: false,
+          tension: 0.3
+        },
+        {
+          label: 'Offre indisponible',
+          data:{{ nombre_probleme_5|safe }},
+          borderColor: '#FFA726',
+          fill: false,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      maintainAspectRatio: false,
+      responsive: true,
+      plugins: {
+            legend: {
+          display: false // Masquer la légende
+        }
+      },
+      scales: {
+        y: {
+          title: {
+            display: true,
+            text: 'Nombre de signalements'
+          },
+          beginAtZero: true
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Mois'
+          }
+        }
+      }
+    }
+  });
+
+// Initialisation du graphique problemes de service (Doughnut)
+document.addEventListener('DOMContentLoaded', function() {
+    
+const totalProblemsservice = {{ totalProblemsservice|safe }};
+const totalProblems = {{ totalProblems|safe }};
+
+
+    const ctx = document.getElementById('ServiceProblemsDoughnut').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Problèmes Service Client', 'Autre'],
+            datasets: [{
+                data: [totalProblemsservice, totalProblems],
+                backgroundColor: [
+                    '#f43f5e', // rose-500 
+                    '#e5e7eb'  // gray-200 
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+           maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    display: false,
+                   
+                }
+            }
+        }
+    });
+});
+
+// Initialisation du graphique problemes de servcie client par région (barres empilées)
+const regionDataByPeriod = [
+  // Ce mois
+  [
+    {
+      label: 'Attente prolongée',
+      data: {{ probleme1_counts|safe }},
+      backgroundColor: 'rgba(255, 99, 132, 0.6)',
+      borderColor: '#FF6384',
+      borderWidth: 2,
+      borderRadius: 8
+    },
+    {
+      label: 'Réclamations ignorées',
+      data: {{ probleme2_counts|safe }},
+      backgroundColor: 'rgba(54, 162, 235, 0.6)',
+      borderColor: '#36A2EB',
+      borderWidth: 2,
+      borderRadius: 8
+    },
+    {
+      label: 'Personnel malpoli',
+      data: {{ probleme3_counts|safe }},
+      backgroundColor: 'rgba(250, 204, 21, 0.6)',
+      borderColor: '#FACC15',
+      borderWidth: 2,
+      borderRadius: 4
+    },
+    {
+      label: 'Agence trop loin',
+      data:{{ probleme4_counts|safe }},
+      backgroundColor: 'rgba(16, 185, 129, 0.6)',
+      borderColor: '#10B981',
+      borderWidth: 2,
+      borderRadius: 4
+    },
+    {
+      label: 'Offre indisponible',
+      data: {{ probleme5_counts|safe }},
+      backgroundColor: 'rgb(255, 167, 38, 0.6)',
+      borderColor: '#FFA726',
+      borderWidth: 2,
+      borderRadius: 4
+    }
+  ],
+  // Dernier mois
+
+  ];
+
+const regionLabels = {{ bu_list|safe }};
+let currentPeriodIndex = 0;
+
+const regionBarCtx = document.getElementById('regionBarChart').getContext('2d');
+const regionChart = new Chart(regionBarCtx, {
+  type: 'bar',
+  data: {
+    labels: regionLabels,
+    datasets: regionDataByPeriod[currentPeriodIndex]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false }
+    },
+    scales: {
+      x: { 
+        stacked: true, 
+        title: { display: true, text: 'Region' },
+        ticks: { font: { size: 12 } }
+      },
+      y: { 
+        stacked: true, 
+        beginAtZero: true,
+        title: { display: true, text: 'Nombre de clients' },
+        ticks: { stepSize: 10 } 
+      }
+    }
+  }
+});
+
+// Initialisation du graphique problemes de service client par Tranche d'age (barres empilées)
+  const npsAgectx = document.getElementById('ageBarChart').getContext('2d');
+  const allDatasets = [
+  {
+    label: 'Attente prolongée',
+    data: {{ data_probleme_1|safe }},
+    backgroundColor: 'rgba(255, 99, 132, 0.6)',
+    borderColor: '#FF6384',
+    borderWidth: 2,
+    borderRadius: 4
+  },
+  {
+    label: 'Réclamations ignorées',
+    data:  {{ data_probleme_2|safe }},
+    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+    borderColor: '#36A2EB',
+    borderWidth: 2,
+    borderRadius: 4
+  },
+  {
+    label: 'Personnel malpoli',
+    data: {{ data_probleme_3|safe }},
+    backgroundColor: 'rgba(250, 204, 21, 0.6)',
+    borderColor: '#FACC15',
+    borderWidth: 2,
+    borderRadius: 4
+  },
+  {
+    label: 'Agence trop loin',
+    data: {{ data_probleme_4|safe }},
+    backgroundColor: 'rgba(16, 185, 129, 0.6)',
+    borderColor: '#10B981',
+    borderWidth: 2,
+    borderRadius: 4
+  },
+  {
+    label: 'Offre indisponible',
+    data: {{ data_probleme_5|safe }},
+    backgroundColor: 'rgb(255, 167, 38, 0.6)',
+    borderColor: '#FFA726',
+    borderWidth: 2,
+    borderRadius: 4
+  }
+];
+const labels ={{ age_ranges|safe }};
+
+let currentDatasetIndex = 0;
+const chart = new Chart(npsAgectx, {
+  type: 'bar',
+  data: {
+    labels: labels,
+    datasets: [allDatasets[currentDatasetIndex]]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        stacked: false,
+        title: { display: true, text: 'Tranche d’âge' },
+        ticks: { font: { size: 12 } }
+      },
+      y: {
+        beginAtZero: true,
+        title: { display: true, text: 'Nombre de clients' },
+        ticks: { stepSize: 10 }
+      }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: { mode: 'index', intersect: false }
+    }
+  }
+});
+
+document.getElementById('problemTypeFilter1').addEventListener('change', function() {
+  const selectedLabel = this.value;
+  const newIndex = allDatasets.findIndex(ds => ds.label === selectedLabel);
+  if (newIndex !== -1) {
+    chart.data.datasets = [allDatasets[newIndex]];
+    chart.update();
+  }
+});
+
+
+
+  
+  // Initialisation du graphique problemes de service par type d'appareil (barres groupées)
+  const deviceBarCtx = document.getElementById('deviceTypeBarChart').getContext('2d');
+new Chart(deviceBarCtx, {
+  type: 'bar',
+  data: {
+    labels:  ['Phablet', 'Smartphone', 'Basic Phone', 'Feature Phone', 'Other'],
+    datasets: [
+      {
+        label: 'Attente prolongée',
+        data: {{ count_probleme_1|safe }},
+        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+        borderColor: '#FF6384',
+        borderWidth: 2,
+        borderRadius: 4
+      },
+      {
+        label: 'Réclamations ignorées',
+        data: {{ count_probleme_2|safe }},
+        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+        borderColor: '#36A2EB',
+        borderWidth: 2,
+        borderRadius: 4
+      },
+      
+      {
+        label: 'Personnel malpoli',
+        data: {{ count_probleme_3|safe }},
+        backgroundColor: 'rgba(250, 204, 21, 0.6)', // #FACC15
+        borderColor: '#FACC15',
+        borderWidth: 2,
+        borderRadius: 4
+      },
+      {
+        label: 'Agence trop loin',
+        data: {{ count_probleme_4|safe }},
+        backgroundColor: 'rgba(16, 185, 129, 0.6)', // #10B981
+        borderColor: '#10B981',
+        borderWidth: 2,
+        borderRadius: 4
+      },
+      {
+      label: 'Offre indisponible',
+      data:{{ count_probleme_5|safe }},
+      backgroundColor: 'rgb(255, 167, 38, 0.6)',
+      borderColor: '#FFA726',
+      borderWidth: 2,
+      borderRadius: 4
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        stacked: false,
+        title: {
+          display: true,
+          text: "Type d’appareil"
+        },
+        ticks: {
+          font: {
+            size: 12
+          }
+        }
+      },
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Nombre de clients'
+        },
+        ticks: {
+          stepSize: 5
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        display: false,
+      
+      },
+      tooltip: {
+        mode: 'index',
+        intersect: false
+      }
+    }
+  }
+});
+</script>
+<!-- Fin du document HTML -->
+</body>
+</html>

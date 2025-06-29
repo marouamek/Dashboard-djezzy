@@ -1,0 +1,334 @@
+<style>
+  /* Styles pour le menu */
+  /* Animation de la sidebar */
+   
+</style>
+
+<aside class="bg-gray-50 dark:bg-gray-900 fixed top-0 left-0 h-screen transition-colors duration-500 ease-in-out"
+  id="sidebar">
+  <!-- Barre de navigation -->
+  <nav class="mt-4 flex flex-col text-sm transition-all duration-300">
+    <!-- Menu Principal -->
+    <section class="px-5 pb-20">
+      <div class="flex items-center justify-between mb-4">
+       
+      <button id="toggleSidebar"
+        class="flex items-center px-4 py-1 text-gray-800 dark:text-gray-100 hover:rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400 menu-icon text-xl font-extrabold">
+        ☰
+      </button>
+     
+      </div>
+      <ul class="mt-4 space-y-2">
+        <li>
+          <a href="{% url 'home' %}" 
+            class="flex items-center px-4 py-2 
+            {% if request.resolver_match.url_name == 'home' %}
+              text-white bg-red-600 font-semibold rounded-full
+            {% else %}
+              text-gray-800 dark:text-gray-100 hover:rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400
+            {% endif %}">
+            <span class="material-icons-round duration-300 menu-icon">home</span>
+            <span class="ml-3 transition-all duration-300 menu-text">Accueil</span>
+          </a>
+        </li>
+        {% if user.is_authenticated and user.profile.role == 'bi_agent' or user.profile.role == 'call_center' or user.profile.role == 'customer_care' %}
+        <li>
+          <a href="{% url 'clients' %}"
+            class="flex items-center px-4 py-2 
+            {% if request.resolver_match.url_name == 'clients' %}
+              text-white bg-red-600 font-semibold rounded-full
+            {% else %}
+              text-gray-800 dark:text-gray-100 hover:rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400
+            {% endif %}">
+            <span class="material-icons-round duration-300 menu-icon">group</span>
+            <span class="ml-3 transition-all duration-300 menu-text">Mes Clients</span>
+          </a>
+        </li>
+        {% endif %}
+        {% if user.is_authenticated and user.profile.role == 'bi_agent'  or user.profile.role == 'customer_care' %}
+        <li>
+          <a href="{% url 'satisfaction' %}"
+            class="flex items-center px-4 py-2 
+            {% if request.resolver_match.url_name == 'satisfaction' %}
+              text-white bg-red-600 font-semibold rounded-full
+            {% else %}
+              text-gray-800 dark:text-gray-100 hover:rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400
+            {% endif %}">
+            <span class="material-icons-round duration-300 menu-icon">tag_faces</span>
+            <span class="ml-3 transition-all duration-300 menu-text">Satisfaction</span>
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'churn' %}"
+            class="flex items-center px-4 py-2 
+            {% if request.resolver_match.url_name == 'churn' %}
+              text-white bg-red-600 font-semibold rounded-full
+            {% else %}
+              text-gray-800 dark:text-gray-100 hover:rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400
+            {% endif %}">
+            <span class="material-icons-round duration-300 menu-icon">person_remove</span>
+            <span class="ml-3 transition-all duration-300 menu-text">Churn</span>
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'sentiment_client' %}"
+            class="flex items-center px-4 py-2 
+            {% if request.resolver_match.url_name == 'sentiment_client' %}
+              text-white bg-red-600 font-semibold rounded-full
+            {% else %}
+              text-gray-800 dark:text-gray-100 hover:rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400
+            {% endif %}">
+            <span class="material-icons-round duration-300 menu-icon">question_answer</span>
+            <span class="ml-3 transition-all duration-300 menu-text">Sentiment</span>
+          </a>
+        </li>
+        {% endif %}
+        {% if user.is_authenticated and user.profile.role == 'bi_agent' or user.profile.role == 'call_center' or user.profile.role == 'customer_care' %}
+        <li>
+          <div href="javascript:void(0)" 
+            class="flex items-center px-4 py-2
+             {% if request.resolver_match.url_name == 'problem_general' %}
+                  text-white bg-red-600 font-semibold rounded-full
+              {% else %}
+              {% if request.resolver_match.url_name in ' problem_internet problem_appel problem_offre problem_tarification problem_service' %}
+                text-gray-800 dark:text-gray-100 bg-gray-300/30 dark:bg-gray-800/30 rounded-full
+              {% else %}
+                text-gray-800 dark:text-gray-100 hover:rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400
+              {% endif %}
+              {% endif %}">
+            <a href="{% url 'problem_general' %}" class="material-icons-round duration-300 menu-icon">report_problem</a>
+            <a  href="{% url 'problem_general' %}" class="ml-3 transition-all duration-300 menu-text">Probléme</a>
+            <a href="javascript:void(0) " class="{% if request.resolver_match.url_name == 'problem_general' %}
+                  material-icons-round dark:text-gray-300 ml-auto menu-text hover:rounded-full text-white rounded-full hover:bg-gray-200/70 hover:text-gray-600 
+              {% else %} material-icons-round ml-auto menu-text hover:rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400 {% endif %}" onclick="toggleSubmenu('problemsSubmenu')">expand_more</a>
+        </div>
+          <ul id="problemsSubmenu" 
+            class="ml-4 mt-2 space-y-1 overflow-hidden transition-all duration-300 ease-in-out max-h-0 hidden">
+           {% if user.profile.role == 'bi_agent' or user.profile.role == 'call_center'  %}
+            <li>
+              <a href="{% url 'problem_internet' %}"
+                class="flex items-center px-4 py-1 
+                {% if request.resolver_match.url_name == 'problem_internet' %}
+                  text-white bg-red-600 font-semibold rounded-full
+                {% else %}
+                  text-gray-600 dark:text-gray-300 hover:rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400
+                {% endif %}">
+                <span class="material-icons-round duration-300 text-base menu-icon">wifi</span>
+                <span class="ml-3 transition-all duration-300 text-xs menu-text">Internet</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'problem_appel' %}"
+                class="flex items-center px-4 py-1 
+                {% if request.resolver_match.url_name == 'problem_appel' %}
+                  text-white bg-red-600 font-semibold rounded-full
+                {% else %}
+                  text-gray-600 dark:text-gray-300 hover:rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400
+                {% endif %}">
+                <span class="material-icons-round duration-300 text-base menu-icon">phone</span>
+                <span class="ml-3 transition-all duration-300 text-xs menu-text">Appel</span>
+              </a>
+            </li>
+            {% else %}
+            {% endif %}
+            {% if user.profile.role == 'bi_agent' or user.profile.role == 'customer_care' %}
+           <li>
+              <a href="{% url 'problem_offre' %}"
+                class="flex items-center px-4 py-1 
+                {% if request.resolver_match.url_name == 'problem_offre' %}
+                  text-white bg-red-600 font-semibold rounded-full
+                {% else %}
+                  text-gray-600 dark:text-gray-300 hover:rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400
+                {% endif %}">
+                <span class="material-icons-round duration-300 text-base menu-icon">sell</span>
+                <span class="ml-3 transition-all duration-300 text-xs menu-text">Offre et service</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'problem_tarification' %}"
+                class="flex items-center px-4 py-1 
+                {% if request.resolver_match.url_name == 'problem_tarification' %}
+                  text-white bg-red-600 font-semibold rounded-full
+                {% else %}
+                  text-gray-600 dark:text-gray-300 hover:rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400
+                {% endif %}">
+                <span class="material-icons-round duration-300 text-base menu-icon">payments</span>
+                <span class="ml-3 transition-all duration-300 text-xs menu-text">Prix et tarification</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'problem_service' %}"
+                class="flex items-center px-4 py-1 
+                {% if request.resolver_match.url_name == 'problem_service' %}
+                  text-white bg-red-600 font-semibold rounded-full
+                {% else %}
+                  text-gray-600 dark:text-gray-300 hover:rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400
+                {% endif %}">
+                <span class="material-icons-round duration-300 text-base menu-icon">support_agent</span>
+                <span class="ml-3 transition-all duration-300 text-xs menu-text">Service Client</span>
+              </a>
+            </li>
+            {% else %}
+            {% endif %}
+          </ul>
+        </li>
+        {% endif %}
+        {% if user.is_authenticated and user.profile.role == 'bi_agent' or user.profile.role == 'call_center' or user.profile.role == 'customer_care' %}
+       <li>
+          <div href="javascript:void(0)" 
+            class="flex items-center px-4 py-2
+             {% if request.resolver_match.url_name == 'amelioration_home' %}
+                  text-white bg-red-600 font-semibold rounded-full
+              {% else %}
+                {% if request.resolver_match.url_name in ' amelioration_internet amelioration_appel amelioration_offre amelioration_tarification amelioration_service' %}
+                text-gray-800 dark:text-gray-100 bg-gray-300/30 dark:bg-gray-800/30 rounded-full
+              {% else %}
+                text-gray-800 dark:text-gray-100 hover:rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400
+              {% endif %}
+              {% endif %}">
+            <a href="{% url 'amelioration_home' %}" class="material-icons-round duration-300 menu-icon">trending_up</a>
+            <a  href="{% url 'amelioration_home' %}" class="ml-3 transition-all duration-300 menu-text">Amélioration</a>
+            <a href="javascript:void(0) " class=" {% if request.resolver_match.url_name == 'amelioration_home' %}
+                  material-icons-round dark:text-gray-300 ml-auto menu-text hover:rounded-full text-white rounded-full hover:bg-gray-200/70 hover:text-gray-600 
+              {% else %} material-icons-round ml-auto menu-text hover:rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400 {% endif %}" onclick="toggleSubmenu('ameliorationSubmenu')">expand_more</a>
+        </div>
+          <ul id="ameliorationSubmenu" 
+            class="ml-4 mt-2 space-y-1 overflow-hidden transition-all duration-300 ease-in-out max-h-0 hidden">
+           {% if user.profile.role == 'bi_agent' or user.profile.role == 'call_center'  %}
+            <li>
+              <a href="{% url 'amelioration_internet' %}"
+                class="flex items-center px-4 py-1 
+                {% if request.resolver_match.url_name == 'amelioration_internet' %}
+                  text-white bg-red-600 font-semibold rounded-full
+                {% else %}
+                  text-gray-600 dark:text-gray-300 hover:rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400
+                {% endif %}">
+                <span class="material-icons-round duration-300 text-base menu-icon">wifi</span>
+                <span class="ml-3 transition-all duration-300 text-xs menu-text">Internet</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'amelioration_appel' %}"
+                class="flex items-center px-4 py-1 
+                {% if request.resolver_match.url_name == 'amelioration_appel' %}
+                  text-white bg-red-600 font-semibold rounded-full
+                {% else %}
+                  text-gray-600 dark:text-gray-300 hover:rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400
+                {% endif %}">
+                <span class="material-icons-round duration-300 text-base menu-icon">phone</span>
+                <span class="ml-3 transition-all duration-300 text-xs menu-text">Appel</span>
+              </a>
+            </li>
+            {% else %}
+            {% endif %}
+            {% if user.profile.role == 'bi_agent' or user.profile.role == 'customer_care' %}
+           <li>
+              <a href="{% url 'amelioration_offre' %}"
+                class="flex items-center px-4 py-1 
+                {% if request.resolver_match.url_name == 'amelioration_offre' %}
+                  text-white bg-red-600 font-semibold rounded-full
+                {% else %}
+                  text-gray-600 dark:text-gray-300 hover:rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400
+                {% endif %}">
+                <span class="material-icons-round duration-300 text-base menu-icon">sell</span>
+                <span class="ml-3 transition-all duration-300 text-xs menu-text">Offre et service</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'amelioration_tarification' %}"
+                class="flex items-center px-4 py-1 
+                {% if request.resolver_match.url_name == 'amelioration_tarification' %}
+                  text-white bg-red-600 font-semibold rounded-full
+                {% else %}
+                  text-gray-600 dark:text-gray-300 hover:rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400
+                {% endif %}">
+                <span class="material-icons-round duration-300 text-base menu-icon">payments</span>
+                <span class="ml-3 transition-all duration-300 text-xs menu-text">Prix et tarification</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'amelioration_service' %}"
+                class="flex items-center px-4 py-1 
+                {% if request.resolver_match.url_name == 'amelioration_service' %}
+                  text-white bg-red-600 font-semibold rounded-full
+                {% else %}
+                  text-gray-600 dark:text-gray-300 hover:rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400
+                {% endif %}">
+                <span class="material-icons-round duration-300 text-base menu-icon">support_agent</span>
+                <span class="ml-3 transition-all duration-300 text-xs menu-text">Service Client</span>
+              </a>
+            </li>
+            {% else %}
+            {% endif %}
+          </ul>
+        </li>
+        {% endif %}
+       
+      </ul>
+    </section>
+  </nav>
+</aside>
+
+<script>
+
+function toggleSubmenu(id) {
+  const submenu = document.getElementById(id);
+  const allSubmenus = document.querySelectorAll('ul[id$="Submenu"]');
+
+  allSubmenus.forEach(sm => {
+    if (sm !== submenu && !sm.classList.contains('hidden')) {
+      sm.style.maxHeight = '0';
+      sm.addEventListener('transitionend', () => sm.classList.add('hidden'), { once: true });
+      localStorage.setItem(sm.id, 'closed');
+    }
+  });
+
+  if (submenu.classList.contains('hidden')) {
+    submenu.classList.remove('hidden');
+    submenu.style.maxHeight = '0';
+    requestAnimationFrame(() => {
+      submenu.style.maxHeight = submenu.scrollHeight + 'px';
+    });
+    localStorage.setItem(id, 'open');
+  } else {
+    submenu.style.maxHeight = '0';
+    submenu.addEventListener('transitionend', () => submenu.classList.add('hidden'), { once: true });
+    localStorage.setItem(id, 'closed');
+  }
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  const darkModeBtn = document.getElementById('toggleDarkMode');
+  const darkModeIcon = document.getElementById('darkModeIcon');
+  const root = document.documentElement;
+
+  // Test si le bouton est bien trouvé
+  console.log('darkModeBtn:', darkModeBtn);
+
+  function setDarkMode(enabled) {
+    if (enabled) {
+      root.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      darkModeIcon.textContent = 'light_mode';
+    } else {
+      root.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      darkModeIcon.textContent = 'dark_mode';
+    }
+  }
+
+  // Initial state
+  const theme = localStorage.getItem('theme');
+  setDarkMode(theme === 'dark');
+
+  // Toggle on click
+  if (darkModeBtn) {
+    darkModeBtn.addEventListener('click', () => {
+      console.log('Toggle clicked!');
+      setDarkMode(!root.classList.contains('dark'));
+    });
+  }
+});
+</script>
+

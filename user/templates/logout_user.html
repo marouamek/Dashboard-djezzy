@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+   <script>
+        // Configuration personnalisée de Tailwind pour la police Core Sans C
+        tailwind.config = {
+        theme: {
+            extend: {
+            fontFamily: {
+                coreSans: ['"Core Sans C"', 'sans-serif'],
+            },
+            },
+        },
+        };
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                fontFamily: {
+                    coreSans: ['"Core Sans C"', 'sans-serif'],
+                },
+                },
+            },
+            };
+  </script>
+
+  <style>
+    /* Variables CSS pour les couleurs principales */
+    :root {
+                --primary-red: #e53e3e;
+                --dark-gray: #2d3748;
+                --light-gray: #edf2f7;
+                --white: #ffffff;
+            }
+    /* Masquer le texte du menu si la sidebar est réduite */
+    .collapsed .menu-text {
+      display: none;
+    }
+    /* Centrer les icônes du menu si la sidebar est réduite */
+    .collapsed .menu-icon {
+      justify-content: center;
+    }
+    /* Style de la sidebar */
+    .sidebar {
+        background-color: var(--white);
+        border-right: 1px solid #e2e8f0;
+        height: 100vh;
+        position: fixed;
+        width: 280px;
+        transition: all 0.3s;
+        z-index: 10;
+    }
+    /* Sidebar réduite */
+    .sidebar-collapsed {
+        width: 80px;
+    }
+    /* Style des cartes (cards) */
+    .card {
+        background-color: var(--white);
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    /* Séparateur de section */
+    .section-divider {
+        border-top: 1px solid #e2e8f0;
+        margin: 10px 0;
+    }
+    /* Bouton de toggle caché par défaut */
+    .toggle-btn {
+        display: none;
+    }
+    /* Animation de la sidebar */
+     #sidebar {
+      transition: width 0.3s ease,background-color 0.7s, color 0.7s;
+    }
+
+     #darkModeIcon {
+        transition: transform 0.3s ease;
+        }
+    #toggleDarkMode:hover #darkModeIcon {
+        transform: rotate(180deg);
+        }
+    body, .card, header, aside, main {
+    transition: background-color 0.7 ease, color 0.7s ease, border-color 0.4s ease;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Core+Sans+C:wght@400;700&display=swap" rel="stylesheet">
+  <title>Déconnexion</title>
+</head>
+<body class="bg-gray-200 text-sm h-max md:min-h-full dark:bg-gray-950 font-coreSans">
+  <!-- Sidebar -->
+  {% include "sidebarHome.html" %}
+  <!-- Main Content -->
+  <main id="mainContent" class="flex-grow transition-all duration-300 ">
+    <!-- Header -->
+   <header class="flex justify-between items-center bg-gray-50 dark:bg-gray-900 px-10 py-4 drop-shadow-sm">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Djezzy_Logo_2015.svg/696px-Djezzy_Logo_2015.svg.png" alt="Logo" class="w-12 h-auto">
+            <p class="text-gray-500 dark:text-gray-300 text-base font-medium"> {% now "l d F Y" %}</p>
+            <p class="text-gray-500 dark:text-gray-300 text-xl font-medium"> {% now " H:i " %}</p>
+            {% include "upper_bar_option.html" %}
+        </header>
+   <div class="p-10">
+      <div class="items-center space-y-5 mb-5">
+        <h1 class="text-3xl font-bold text-indigo-950 dark:text-gray-100">Déconnexion</h1>
+        <form method="POST" action="{% url 'logout_user' %}" class="bg-white dark:bg-gray-800 w-max p-5 rounded-lg shadow-lg">
+          {% csrf_token %}
+          <p class="mb-4 text-lg text-gray-700 dark:text-gray-200">
+            Voulez-vous vraiment vous déconnecter ?
+          </p>
+          <div class="flex justify-between">
+            <!-- Bouton pour annuler -->
+            <a href="{{ referer}}" class="text-red-600 border border-red-600 hover:bg-red-100 dark:hover:bg-red-900 px-4 py-2 rounded-lg">Annuler</a>
+            <!-- Bouton pour confirmer la déconnexion -->
+            <input type="submit" value="Déconnexion" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 cursor-pointer">
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+  <script>
+    const sidebar = document.getElementById('sidebar');
+    const toggleSidebar = document.getElementById('toggleSidebar');
+    const mainContent = document.getElementById('mainContent');
+    // Vérifier l'état de la sidebar au chargement de la page
+    const sidebarState = sessionStorage.getItem('sidebarState');
+    if (sidebarState === 'open') {
+      sidebar.classList.add('w-60');
+      sidebar.classList.remove('collapsed');
+      mainContent.classList.add("ml-60");
+      mainContent.classList.remove("ml-24");
+    } else {
+      sidebar.classList.remove('w-60');
+      sidebar.classList.add('w-24');
+      mainContent.classList.remove("ml-60");
+      mainContent.classList.add("ml-24");
+      sidebar.classList.add('collapsed');
+    }
+    toggleSidebar.addEventListener('click', () => {
+      const isCollapsed = sidebar.classList.contains('collapsed');
+      if (isCollapsed) {
+        sidebar.classList.remove('collapsed');
+        sidebar.classList.remove('w-24');
+        sidebar.classList.add('w-60');
+        mainContent.classList.add("ml-60");
+        mainContent.classList.remove("ml-24");
+        sessionStorage.setItem('sidebarState', 'open');
+      } else {
+        sidebar.classList.add('collapsed');
+        sidebar.classList.add('w-24');
+        sidebar.classList.remove('w-60');
+        mainContent.classList.remove("ml-60");
+        mainContent.classList.add("ml-24");
+        sessionStorage.setItem('sidebarState', 'closed');
+      }
+    });
+  </script>
+</body>
+</html>
